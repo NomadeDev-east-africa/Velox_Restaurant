@@ -1,0 +1,138 @@
+SESSION 2 — VELOX RESTAURANT (Nomade253 RestaurantApp)
+Date : 2026-04-29
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CONTEXTE DE DÉPART
+──────────────────
+Reprise après la Session 1 où toutes les phases 1→8 avaient été complétées
+(Gradle, Hilt, Data classes, Repositories, Room, Login, tous les écrans,
+système de catégories du menu). Build fonctionnel avec AGP 8.7.3 + Kotlin 2.1.0.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CORRECTIF 1 — MENU ITEMS INVISIBLES DANS LA CLIENTAPP FLUTTER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Symptôme :
+  Les items créés par la nouvelle app Velox Restaurant (ex: "beef casser")
+  n'apparaissaient pas dans la ClientApp Flutter, alors que les anciens
+  items créés par l'app Flutter eux s'affichaient normalement.
+
+Diagnostic via MCP Firebase :
+  Comparaison des documents Firestore dans menu_items :
+  - Anciens items Flutter → champ "createdAt" présent
+  - Nouvel item "beef casser" (ID: Jlm3e1AYtpH5J1aNtBzT) → "createdAt" absent,
+    seulement "updatedAt" présent
+
+Cause racine :
+  Dans MenuRepositoryImpl.kt, updateMenuItem() utilisait .set() au lieu de .update().
+  .set() REMPLACE tout le document → efface "createdAt".
+  Flow fautif dans saveItem() du MenuViewModel :
+    1. addMenuItem()   → écrit "createdAt" ✓
+    2. uploadMenuImage() → upload image
+    3. updateMenuItem()  → .set() écrase tout le doc → "createdAt" supprimé ✗
+  La ClientApp Flutter trie les items avec orderBy("createdAt"), donc
+  les documents sans ce champ sont exclus des résultats Firestore.
+
+Fichier corrigé :
+  app/src/main/java/com/example/velox_restaurant/data/remote/MenuRepositoryImpl.kt
+  Ligne 56 : .set() → .update()
+
+Réparation Firestore :
+  Document Jlm3e1AYtpH5J1aNtBzT ("beef casser") mis à jour via MCP Firebase :
+  createdAt: "2026-04-28T21:58:49.347Z" ajouté directement en base.
+  L'item est désormais visible dans la ClientApp sans rebuild.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CORRECTIF 2 — NOTIFICATIONS FCM NON REÇUES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Symptôme :
+  L'app Velox Restaurant recevait les commandes en temps réel (Firestore OK)
+  mais ne recevait aucune notification FCM pour les nouvelles commandes.
+
+Diagnostic via MCP Firebase :
+  Document restaurants/nudaILRLqLRDfriLe3xmDehrvvJ2 (Burger King) :
+  - fcmToken: null   ← token absent !
+  - fcmTokenUpdatedAt: "2026-04-26T07:46:29.521Z"  ← timestamp présent mais token null
+  La Cloud Function essayait d'envoyer à null → échec silencieux.
+
+Cause racine :
+  RestaurantFcmService.onNewToken() sauvegarde le token seulement quand il change.
+  Si l'appareil avait déjà un token FCM (installé avant ou token non expiré),
+  onNewToken() ne se déclenche pas → token jamais sauvé en Firestore.
+  Au login, le token actuel n'était jamais récupéré ni persisté.
+
+Fichier corrigé :
+  app/src/main/java/com/example/velox_restaurant/data/remote/AuthRepositoryImpl.kt
+  Ajout après la vérification isActive :
+    val token = FirebaseMessaging.getInstance().token.await()
+    → sauvegarde fcmToken + fcmTokenUpdatedAt dans restaurants/{uid}
+  Désormais, à chaque login le token FCM actuel est fetch et sauvé.
+
+Imports ajoutés :
+  - com.google.firebase.messaging.FirebaseMessaging
+  - com.google.firebase.firestore.FieldValue
+
+Action requise :
+  Se déconnecter et se reconnecter dans l'app pour déclencher le fetch
+  du token FCM et le sauvegarder en Firestore.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AJOUT — LOGO DE L'APPLICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Fichier logo fourni par l'utilisateur :
+  app/src/main/res/drawable/logo_restaurant.png
+
+1. Écran de Login
+   Fichier : app/src/main/java/com/example/velox_restaurant/ui/auth/LoginScreen.kt
+   Avant : cercle vert dégradé avec lettre "N" (placeholder)
+   Après : Image(painterResource(R.drawable.logo_restaurant), taille 120dp)
+
+2. Icône de l'app (launcher icon sur le téléphone)
+   Fichier créé   : app/src/main/res/drawable/ic_launcher_foreground_logo.xml
+                    → inset 14% autour de logo_restaurant (safe zone adaptive icon)
+   Fichier modifié: app/src/main/res/drawable/ic_launcher_background.xml
+                    → fond noir #131313 (thème Onyx Grid, remplace le vert Android)
+   Fichiers modifiés:
+     app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+     app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+     → foreground + monochrome pointent vers ic_launcher_foreground_logo
+
+   Note : Rebuild Project + réinstallation de l'APK nécessaire pour
+          que l'icône soit mise à jour sur l'écran d'accueil du téléphone.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RÉCAPITULATIF DES FICHIERS MODIFIÉS EN SESSION 2
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  data/remote/MenuRepositoryImpl.kt          → .set() → .update() dans updateMenuItem()
+  data/remote/AuthRepositoryImpl.kt          → fetch + save FCM token au login
+  ui/auth/LoginScreen.kt                     → logo_restaurant remplace cercle "N"
+  res/drawable/ic_launcher_foreground_logo.xml  (nouveau)
+  res/drawable/ic_launcher_background.xml    → fond #131313
+  res/mipmap-anydpi-v26/ic_launcher.xml      → nouveau foreground logo
+  res/mipmap-anydpi-v26/ic_launcher_round.xml → nouveau foreground logo
+
+Firestore (hors code) :
+  menu_items/Jlm3e1AYtpH5J1aNtBzT → createdAt ajouté via MCP Firebase
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ÉTAT DU PROJET EN FIN DE SESSION 2
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✓ Build fonctionnel (AGP 8.7.3, Kotlin 2.1.0, Hilt 2.56)
+  ✓ Toutes les phases 1→8 complètes (voir travaux1.txt / accomplissements1.txt)
+  ✓ Items menu créés par Velox Restaurant visibles dans la ClientApp Flutter
+  ✓ FCM token sauvé au login → notifications opérationnelles après reconnexion
+  ✓ Logo Nomade253 affiché dans l'écran login
+  ✓ Logo Nomade253 comme icône de l'app (fond noir Onyx Grid)
+
+  Package   : com.example.velox_restaurant
+  Firebase  : nomade253-478a9
+  minSdk    : 26 (Android 8.0)
