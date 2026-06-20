@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -9,14 +11,14 @@ plugins {
     alias(libs.plugins.firebase.crashlytics)
 }
 
-import java.util.Properties
-
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties().also { props ->
     if (keystorePropertiesFile.exists()) {
         keystorePropertiesFile.inputStream().use { props.load(it) }
     }
 }
+
+fun keystoreProperty(key: String): String? = keystoreProperties.getProperty(key)
 
 android {
     namespace = "dj.nomade.velox_restaurant"
@@ -32,12 +34,16 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    val hasReleaseKeystore = keystorePropertiesFile.exists()
+
     signingConfigs {
-        create("release") {
-            storeFile = file(keystoreProperties.getProperty("storeFile"))
-            storePassword = keystoreProperties.getProperty("storePassword")
-            keyAlias = keystoreProperties.getProperty("keyAlias")
-            keyPassword = keystoreProperties.getProperty("keyPassword")
+        if (hasReleaseKeystore) {
+            create("release") {
+                storeFile = keystoreProperty("storeFile")?.let { file(it) }
+                storePassword = keystoreProperty("storePassword")
+                keyAlias = keystoreProperty("keyAlias")
+                keyPassword = keystoreProperty("keyPassword")
+            }
         }
     }
 
@@ -48,7 +54,12 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (hasReleaseKeystore) {
+                signingConfigs.getByName("release")
+            } else {
+                logger.warn("keystore.properties not found — release build will be unsigned.")
+                null
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

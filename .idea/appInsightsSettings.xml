@@ -9,8 +9,8 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="com.example.velox_restaurant" />
-                  <option name="mobileSdkAppId" value="1:91637120258:android:2fb3645f0d74f7d059d61b" />
+                  <option name="appId" value="dj.nomade.velox_restaurant" />
+                  <option name="mobileSdkAppId" value="1:91637120258:android:e27c42709c930efe59d61b" />
                   <option name="projectId" value="nomade253-478a9" />
                   <option name="projectNumber" value="91637120258" />
                 </ConnectionSetting>

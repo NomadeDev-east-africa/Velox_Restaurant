@@ -22,8 +22,8 @@
 -dontwarn com.google.android.gms.**
 
 # Firestore : garder les data classes pour la sérialisation/désérialisation
--keep class com.example.velox_restaurant.data.model.** { *; }
--keepclassmembers class com.example.velox_restaurant.data.model.** {
+-keep class dj.nomade.velox_restaurant.data.model.** { *; }
+-keepclassmembers class dj.nomade.velox_restaurant.data.model.** {
     <init>(...);
     <fields>;
 }

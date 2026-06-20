@@ -15,3 +15,6 @@ keystore.properties
 .externalNativeBuild
 .cxx
 local.properties
+
+# Firebase - ne jamais committer
+app/google-services.json

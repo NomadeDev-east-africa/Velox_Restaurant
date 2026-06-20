@@ -13,7 +13,17 @@
       "Bash(keytool -genkeypair -v -keystore velox-release.keystore -alias velox-key -keyalg RSA -keysize 2048 -validity 10000 -dname \"CN=Nomade253, OU=Mobile, O=Nomade253, L=Djibouti, ST=Djibouti, C=DJ\")",
       "PowerShell(keytool *)",
       "PowerShell(adb devices *)",
-      "PowerShell(adb *)"
+      "PowerShell(adb *)",
+      "WebFetch(domain:services.gradle.org)",
+      "WebFetch(domain:downloads.gradle.org)",
+      "Bash(./gradlew help *)",
+      "Bash(./gradlew :app:assembleDebug)",
+      "mcp__firebase__firestore_list_collections",
+      "Bash(./gradlew clean *)",
+      "Bash(./gradlew :app:compileDebugKotlin)",
+      "Bash(powershell *)",
+      "Bash(keytool -list -v -keystore \"C:\\\\Users\\\\PC\\\\Desktop\\\\FINAL 253 NOMADE\\\\client app\\\\keystore\\\\nomade_restaurant_release.jks\" -storepass nomade253secure)",
+      "Bash(./gradlew :app:assembleRelease)"
     ]
   }
 }
