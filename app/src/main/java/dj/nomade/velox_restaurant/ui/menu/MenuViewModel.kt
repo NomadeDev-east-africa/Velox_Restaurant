@@ -1,6 +1,5 @@
 package dj.nomade.velox_restaurant.ui.menu
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dj.nomade.velox_restaurant.data.model.Category
@@ -28,7 +27,6 @@ data class MenuUiState(
     val activePromotions: List<Promotion> = emptyList(),
     val selectedCategory: String = "Toutes",
     val isLoading: Boolean = true,
-    val isSaving: Boolean = false,
     val error: String? = null,
 )
 
@@ -92,61 +90,10 @@ class MenuViewModel @Inject constructor(
 
     fun selectCategory(category: String) = _uiState.update { it.copy(selectedCategory = category) }
 
-    fun addCategory(name: String) {
-        val trimmed = name.trim()
-        if (trimmed.isBlank()) return
-        if (_uiState.value.categories.any { it.name.equals(trimmed, ignoreCase = true) }) {
-            _uiState.update { it.copy(error = "La catégorie « $trimmed » existe déjà") }
-            return
-        }
-        viewModelScope.launch {
-            runCatching { categoryRepository.addCategory(restaurantId, trimmed) }
-                .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
-        }
-    }
-
-    fun deleteCategory(category: Category) {
-        if (category.isDefault) return
-        viewModelScope.launch {
-            runCatching { categoryRepository.deleteCategory(restaurantId, category.id) }
-                .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
-        }
-    }
-
     fun toggleAvailability(item: MenuItem) {
         viewModelScope.launch {
             runCatching { menuRepository.toggleItemAvailability(item.id, !item.isAvailable) }
                 .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
-        }
-    }
-
-    fun deleteItem(itemId: String) {
-        viewModelScope.launch {
-            runCatching { menuRepository.deleteMenuItem(itemId) }
-                .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
-        }
-    }
-
-    fun saveItem(item: MenuItem, imageUri: Uri?) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true) }
-            runCatching {
-                var finalItem = item.copy(restaurantId = restaurantId)
-                if (item.id.isEmpty()) {
-                    val newId = menuRepository.addMenuItem(finalItem)
-                    if (imageUri != null) {
-                        val url = menuRepository.uploadMenuImage(restaurantId, newId, imageUri)
-                        menuRepository.updateMenuItem(finalItem.copy(id = newId, imageUrl = url))
-                    }
-                } else {
-                    if (imageUri != null) {
-                        val url = menuRepository.uploadMenuImage(restaurantId, item.id, imageUri)
-                        finalItem = finalItem.copy(imageUrl = url)
-                    }
-                    menuRepository.updateMenuItem(finalItem)
-                }
-            }.onFailure { e -> _uiState.update { it.copy(error = e.message) } }
-            _uiState.update { it.copy(isSaving = false) }
         }
     }
 
