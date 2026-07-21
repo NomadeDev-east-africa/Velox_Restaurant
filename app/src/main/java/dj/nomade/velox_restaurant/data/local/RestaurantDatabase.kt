@@ -9,7 +9,8 @@ import dj.nomade.velox_restaurant.data.local.entity.OrderEntity
 
 @Database(
     entities = [OrderEntity::class, MenuItemEntity::class],
-    version = 1,
+    // v2 : ajout de subtotal/discount sur active_orders (CA hors livraison).
+    version = 2,
     exportSchema = false,
 )
 abstract class RestaurantDatabase : RoomDatabase() {

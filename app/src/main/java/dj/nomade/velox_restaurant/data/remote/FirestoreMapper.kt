@@ -44,6 +44,11 @@ fun DocumentSnapshot.toOrder(): Order {
         customerName = getString("customerName") ?: "",
         customerPhone = getString("customerPhone") ?: "",
         items = items,
+        // Les commandes anciennes n'ont pas de `subtotal` : on le reconstitue
+        // depuis total - deliveryFee pour ne pas fausser l'historique comptable.
+        subtotal = getDouble("subtotal")
+            ?: ((getDouble("total") ?: 0.0) - (getDouble("deliveryFee") ?: 0.0)),
+        discount = getDouble("discount") ?: 0.0,
         deliveryFee = getDouble("deliveryFee") ?: 0.0,
         total = getDouble("total") ?: 0.0,
         status = OrderStatus.fromString(getString("status") ?: ""),

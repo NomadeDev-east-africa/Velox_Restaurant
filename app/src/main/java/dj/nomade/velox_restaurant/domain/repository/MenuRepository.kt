@@ -12,6 +12,9 @@ interface MenuRepository {
     suspend fun toggleItemAvailability(itemId: String, isAvailable: Boolean)
     suspend fun uploadMenuImage(restaurantId: String, itemId: String, imageUri: Uri): String
 
+    /** Ne touche que `imageUrl` — le reste du plat (nom, prix, description) est préservé. */
+    suspend fun updateItemImage(itemId: String, imageUrl: String)
+
     // Cache Room
     suspend fun cacheMenuItems(items: List<MenuItem>)
     fun streamCachedMenuItems(restaurantId: String): Flow<List<MenuItem>>

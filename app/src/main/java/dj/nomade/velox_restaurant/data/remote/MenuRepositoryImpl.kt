@@ -83,6 +83,17 @@ class MenuRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateItemImage(itemId: String, imageUrl: String) {
+        withRetry {
+            collection.document(itemId).update(
+                mapOf(
+                    "imageUrl" to imageUrl,
+                    "updatedAt" to FieldValue.serverTimestamp(),
+                )
+            ).await()
+        }
+    }
+
     override suspend fun uploadMenuImage(restaurantId: String, itemId: String, imageUri: Uri): String {
         require(context.isValidImageUri(imageUri)) { "Image invalide ou corrompue" }
         val timestamp = System.currentTimeMillis()

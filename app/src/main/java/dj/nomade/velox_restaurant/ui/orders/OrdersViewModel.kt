@@ -96,14 +96,26 @@ class OrdersViewModel @Inject constructor(
 
     fun markReady(orderId: String) {
         viewModelScope.launch {
-            runCatching {
-                orderRepository.markReady(orderId)
-                orderRepository.sendReadyNotifications(orderId)
-            }.onFailure { e ->
-                crashlytics.log("markReady failed — orderId=$orderId")
-                crashlytics.recordException(e)
-                _uiState.update { it.copy(error = e.message) }
-            }
+            // 1. Passage du statut à "ready" (écriture Firestore).
+            runCatching { orderRepository.markReady(orderId) }
+                .onFailure { e ->
+                    crashlytics.log("markReady failed — orderId=$orderId")
+                    crashlytics.recordException(e)
+                    _uiState.update { it.copy(error = e.message) }
+                    return@launch
+                }
+
+            // 2. Déclenchement des notifications (Cloud Function). Le statut est
+            //    déjà "ready" ; on distingue donc l'échec de notification pour
+            //    que le restaurateur sache que le client n'a PAS été prévenu.
+            orderRepository.sendReadyNotifications(orderId)
+                .onFailure { e ->
+                    crashlytics.log("sendReadyNotifications failed — orderId=$orderId")
+                    crashlytics.recordException(e)
+                    _uiState.update {
+                        it.copy(error = "Commande marquée prête, mais l'envoi de la notification a échoué. Réessayez.")
+                    }
+                }
         }
     }
 

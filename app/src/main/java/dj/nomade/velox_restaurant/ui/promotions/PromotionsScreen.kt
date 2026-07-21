@@ -31,8 +31,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,7 +58,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dj.nomade.velox_restaurant.data.model.Category
 import dj.nomade.velox_restaurant.data.model.MenuItem
 import dj.nomade.velox_restaurant.data.model.Promotion
 import dj.nomade.velox_restaurant.ui.theme.InterFontFamily
@@ -185,10 +182,9 @@ fun PromotionsScreen(viewModel: PromotionsViewModel = hiltViewModel()) {
         AddPromotionSheet(
             isSaving = state.isSaving,
             menuItems = state.menuItems,
-            categories = state.categories,
             onDismiss = { showAddSheet = false },
-            onSave = { type, targetName, discount, label, endDate ->
-                viewModel.addPromotion(type, targetName, discount, label, endDate)
+            onSave = { targetName, discount, label, endDate ->
+                viewModel.addPromotion(targetName, discount, label, endDate)
                 showAddSheet = false
             },
         )
@@ -233,11 +229,9 @@ fun PromotionsScreen(viewModel: PromotionsViewModel = hiltViewModel()) {
 private fun AddPromotionSheet(
     isSaving: Boolean,
     menuItems: List<MenuItem>,
-    categories: List<Category>,
     onDismiss: () -> Unit,
-    onSave: (type: String, targetName: String, discount: Int, label: String, endDate: Long?) -> Unit,
+    onSave: (targetName: String, discount: Int, label: String, endDate: Long?) -> Unit,
 ) {
-    var type by remember { mutableStateOf("item") }
     var targetName by remember { mutableStateOf("") }
     var dropdownExpanded by remember { mutableStateOf(false) }
     var discount by remember { mutableStateOf("") }
@@ -245,12 +239,10 @@ private fun AddPromotionSheet(
     var hasEndDate by remember { mutableStateOf(false) }
     var endDays by remember { mutableStateOf("7") }
 
-    LaunchedEffect(type) {
-        targetName = ""
-        dropdownExpanded = false
-    }
-
-    val options = if (type == "item") menuItems.map { it.name } else categories.map { it.name }
+    // Une promotion cible toujours un plat précis. Le ciblage par catégorie a été
+    // retiré : il reposait sur un nom de catégorie libre, et les promos ainsi
+    // créées ne correspondaient à aucun plat réel du restaurant.
+    val options = menuItems.map { it.name }
 
     val discountInt = discount.toIntOrNull()
     val isValid = targetName.isNotBlank()
@@ -277,23 +269,6 @@ private fun AddPromotionSheet(
                 color = MaterialTheme.colorScheme.onSurface,
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("item" to "PLAT", "category" to "CATÉGORIE").forEach { (value, chipLabel) ->
-                    FilterChip(
-                        selected = type == value,
-                        onClick = { type = value },
-                        label = {
-                            Text(chipLabel, fontFamily = InterFontFamily, fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold)
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = NeonGreen.copy(alpha = 0.2f),
-                            selectedLabelColor = NeonGreen,
-                        ),
-                    )
-                }
-            }
-
             ExposedDropdownMenuBox(
                 expanded = dropdownExpanded,
                 onExpandedChange = { dropdownExpanded = it },
@@ -302,7 +277,7 @@ private fun AddPromotionSheet(
                     value = targetName,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text(if (type == "item") "Sélectionner un plat" else "Sélectionner une catégorie") },
+                    label = { Text("Sélectionner un plat") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
                     modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
                     colors = sheetFieldColors(),
@@ -317,7 +292,7 @@ private fun AddPromotionSheet(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    if (type == "item") "Aucun plat disponible" else "Aucune catégorie disponible",
+                                    "Aucun plat disponible",
                                     fontFamily = InterFontFamily,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -411,7 +386,7 @@ private fun AddPromotionSheet(
                         val days = endDays.toLongOrNull() ?: 7L
                         System.currentTimeMillis() + days * 24 * 60 * 60 * 1000L
                     } else null
-                    onSave(type, targetName, discountInt!!, label, endDate)
+                    onSave(targetName, discountInt!!, label, endDate)
                 },
                 enabled = isValid && !isSaving,
                 modifier = Modifier.fillMaxWidth().height(52.dp),

@@ -1,5 +1,7 @@
 package dj.nomade.velox_restaurant.ui.menu
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,12 +20,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,9 +49,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -57,11 +71,24 @@ import dj.nomade.velox_restaurant.ui.theme.SurfaceL3
 fun MenuScreen(viewModel: MenuViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val filteredItems by viewModel.filteredItems.collectAsStateWithLifecycle()
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+
+    // Le sélecteur d'image est partagé : on retient le plat visé le temps du choix.
+    var pendingImageItem by remember { mutableStateOf<MenuItem?>(null) }
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        val target = pendingImageItem
+        pendingImageItem = null
+        if (uri != null && target != null) viewModel.changeItemImage(target, uri)
+    }
+
+    var showAddDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let { snackbar.showSnackbar(it); viewModel.clearError() }
     }
+
+    val isEditable = uiState.selectedCategory in MenuViewModel.EDITABLE
 
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(Modifier.fillMaxSize()) {
@@ -90,23 +117,48 @@ fun MenuScreen(viewModel: MenuViewModel = hiltViewModel()) {
             ) {
                 item {
                     CategoryChip(
-                        label = "Toutes",
-                        selected = uiState.selectedCategory == "Toutes",
-                        onClick = { viewModel.selectCategory("Toutes") },
+                        label = MenuViewModel.ALL,
+                        selected = uiState.selectedCategory == MenuViewModel.ALL,
+                        onClick = { viewModel.selectCategory(MenuViewModel.ALL) },
                     )
                 }
-                items(uiState.categories) { cat ->
+                items(categories, key = { it }) { name ->
                     CategoryChip(
-                        label = cat.name,
-                        selected = uiState.selectedCategory == cat.name,
-                        onClick = { viewModel.selectCategory(cat.name) },
+                        label = name,
+                        selected = uiState.selectedCategory == name,
+                        onClick = { viewModel.selectCategory(name) },
                     )
                 }
             }
 
             Spacer(Modifier.height(12.dp))
 
-            // ── Liste plats (lecture seule) ───────────────────────────
+            // ── Ajout d'une sauce / d'un supplément ───────────────────
+            if (isEditable) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .background(SurfaceL2, RoundedCornerShape(10.dp))
+                        .clickable { showAddDialog = true }
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, tint = NeonGreen,
+                        modifier = Modifier.size(18.dp))
+                    Text(
+                        "Ajouter ${uiState.selectedCategory.lowercase().removeSuffix("s")}",
+                        color = NeonGreen,
+                        fontFamily = ManropeFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+            }
+
+            // ── Liste plats ───────────────────────────────────────────
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp),
@@ -119,8 +171,27 @@ fun MenuScreen(viewModel: MenuViewModel = hiltViewModel()) {
                     MenuItemCard(
                         item = item,
                         promotion = promo,
+                        isUploadingImage = uiState.uploadingImageFor == item.id,
                         onToggle = { viewModel.toggleAvailability(item) },
+                        onEditImage = {
+                            pendingImageItem = item
+                            imagePicker.launch("image/*")
+                        },
+                        onDelete = if (item.category in MenuViewModel.EDITABLE) {
+                            { viewModel.deleteExtra(item) }
+                        } else null,
                     )
+                }
+                if (isEditable && filteredItems.isEmpty()) {
+                    item {
+                        Text(
+                            "Aucun élément dans cette catégorie pour le moment.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontFamily = InterFontFamily,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(vertical = 24.dp),
+                        )
+                    }
                 }
                 item { Spacer(Modifier.height(80.dp)) }
             }
@@ -128,6 +199,73 @@ fun MenuScreen(viewModel: MenuViewModel = hiltViewModel()) {
 
         SnackbarHost(hostState = snackbar, modifier = Modifier.align(Alignment.BottomCenter))
     }
+
+    if (showAddDialog) {
+        AddExtraDialog(
+            category = uiState.selectedCategory,
+            onDismiss = { showAddDialog = false },
+            onConfirm = { name, price ->
+                viewModel.addExtra(name, price, uiState.selectedCategory)
+                showAddDialog = false
+            },
+        )
+    }
+}
+
+// ── Dialogue d'ajout sauce / supplément ───────────────────────────────────────
+
+@Composable
+private fun AddExtraDialog(
+    category: String,
+    onDismiss: () -> Unit,
+    onConfirm: (name: String, price: Double) -> Unit,
+) {
+    var name by remember { mutableStateOf("") }
+    var price by remember { mutableStateOf("") }
+    val parsedPrice = price.toDoubleOrNull()
+    // Les règles Firestore imposent `price > 0` à la création d'un menuItem :
+    // un prix à 0 partirait en PERMISSION_DENIED. On bloque donc en amont.
+    val canConfirm = name.isNotBlank() && parsedPrice != null && parsedPrice > 0
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = SurfaceL2,
+        title = {
+            Text(
+                "Nouvelle ${category.lowercase().removeSuffix("s")}",
+                fontFamily = ManropeFontFamily,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nom") },
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = price,
+                    onValueChange = { price = it.filter { c -> c.isDigit() } },
+                    label = { Text("Prix (FDJ)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(name, parsedPrice ?: 0.0) }, enabled = canConfirm) {
+                Text("Ajouter", color = if (canConfirm) NeonGreen else MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Annuler", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+    )
 }
 
 // ── Chip catégorie ────────────────────────────────────────────────────────────
@@ -152,13 +290,16 @@ private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) 
     }
 }
 
-// ── Carte plat (lecture seule + bascule disponibilité) ──────────────────────────
+// ── Carte plat (photo modifiable + bascule disponibilité) ──────────────────────
 
 @Composable
 private fun MenuItemCard(
     item: MenuItem,
     promotion: Promotion?,
+    isUploadingImage: Boolean,
     onToggle: () -> Unit,
+    onEditImage: () -> Unit,
+    onDelete: (() -> Unit)?,
 ) {
     val context = LocalContext.current
     var imageError by remember(item.imageUrl) { mutableStateOf(false) }
@@ -170,11 +311,13 @@ private fun MenuItemCard(
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // Vignette cliquable : seule la photo est modifiable, jamais le nom ni le prix.
         Box(
             modifier = Modifier
                 .size(72.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(SurfaceL3),
+                .background(SurfaceL3)
+                .clickable(enabled = !isUploadingImage) { onEditImage() },
             contentAlignment = Alignment.Center,
         ) {
             if (!item.imageUrl.isNullOrBlank() && !imageError) {
@@ -190,6 +333,32 @@ private fun MenuItemCard(
                 )
             } else {
                 Text("🍽", fontSize = 28.sp)
+            }
+
+            if (isUploadingImage) {
+                Box(
+                    modifier = Modifier.fillMaxSize().background(SurfaceL3.copy(alpha = 0.7f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator(color = NeonGreen, strokeWidth = 2.dp,
+                        modifier = Modifier.size(20.dp))
+                }
+            } else {
+                // Pastille appareil photo : rend l'action découvrable.
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(3.dp)
+                        .background(NeonGreen, RoundedCornerShape(50))
+                        .padding(3.dp),
+                ) {
+                    Icon(
+                        Icons.Default.PhotoCamera,
+                        contentDescription = "Changer la photo",
+                        tint = OnNeonGreen,
+                        modifier = Modifier.size(12.dp),
+                    )
+                }
             }
         }
 
@@ -255,5 +424,16 @@ private fun MenuItemCard(
                 uncheckedTrackColor = SurfaceL3,
             ),
         )
+
+        if (onDelete != null) {
+            IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    Icons.Default.DeleteOutline,
+                    contentDescription = "Supprimer ${item.name}",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
     }
 }
