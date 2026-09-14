@@ -25,7 +25,7 @@ class AuthRepositoryImpl @Inject constructor(
         val doc = firestore.collection("restaurants").document(uid).get().await()
         if (doc.getBoolean("isActive") != true) {
             auth.signOut()
-            error("Compte désactivé. Contactez le support Nomade253.")
+            error("Compte désactivé. Contactez le support Velox.")
         }
 
         // Lie les futurs crash reports à ce restaurant

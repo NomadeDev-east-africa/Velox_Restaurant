@@ -4,7 +4,9 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dj.nomade.velox_restaurant.data.model.MenuItem
+import dj.nomade.velox_restaurant.data.model.OptionChoice
 import dj.nomade.velox_restaurant.data.model.Promotion
+import dj.nomade.velox_restaurant.data.model.normalizeOptionName
 import dj.nomade.velox_restaurant.domain.repository.AuthRepository
 import dj.nomade.velox_restaurant.domain.repository.CategoryRepository
 import dj.nomade.velox_restaurant.domain.repository.MenuRepository
@@ -28,7 +30,25 @@ data class MenuUiState(
     val selectedCategory: String = MenuViewModel.ALL,
     val isLoading: Boolean = true,
     val uploadingImageFor: String? = null,
+    /** Clé (nom normalisé) du choix dont la rupture est en cours d'écriture. */
+    val togglingChoice: String? = null,
     val error: String? = null,
+)
+
+/**
+ * Un choix d'option agrégé sur tout le menu du restaurant. Chaque plat porte sa
+ * propre copie des mêmes choix : « Sauce roquefort » existe 15 fois chez Davido,
+ * on n'en affiche qu'une ligne portant le nombre de plats concernés.
+ */
+data class ExtraOption(
+    val group: String,
+    val name: String,
+    val price: Double,
+    val itemCount: Int,
+    /** `false` dès qu'au moins un plat marque ce choix indisponible. */
+    val available: Boolean,
+    /** `false` si l'état diffère d'un plat à l'autre. */
+    val isUniform: Boolean,
 )
 
 @HiltViewModel
@@ -43,13 +63,32 @@ class MenuViewModel @Inject constructor(
         const val ALL = "Toutes"
         const val SAUCES = "Sauces"
         const val SUPPLEMENTS = "Suppléments"
+        const val LEGUMES = "Légumes"
 
         /**
-         * Les deux seules catégories toujours proposées, même vides : le restaurateur
-         * doit pouvoir créer sa première sauce, et il faut donc un onglet où le faire.
-         * Ce sont aussi les seules où l'ajout/suppression d'entrées est autorisé.
+         * Sections d'options, distinctes des catégories de plats : elles ne listent
+         * pas des documents `menuItems` mais les choix embarqués dans leur champ
+         * `optionGroups`. Une section n'apparaît que si le menu la contient vraiment.
          */
-        val EDITABLE = listOf(SAUCES, SUPPLEMENTS)
+        val OPTION_SECTIONS = listOf(SAUCES, SUPPLEMENTS, LEGUMES)
+
+        /**
+         * Le rangement se fait sur le nom du **groupe**, jamais sur celui du choix :
+         * « Sauce roquefort » appartient au groupe « Suppléments » et doit donc
+         * s'afficher dans Suppléments.
+         *
+         * L'ordre des tests reproduit `isSauceGroup()` de l'app client
+         * (`option_selection.dart`) : un groupe contenant « sauce » part en sauces.
+         */
+        fun sectionOf(groupName: String): String? {
+            val n = groupName.normalizeOptionName()
+            return when {
+                n.contains("sauce") -> SAUCES
+                n.contains("supplement") || n.contains("extra") -> SUPPLEMENTS
+                n.contains("legume") -> LEGUMES
+                else -> null
+            }
+        }
     }
 
     private val _uiState = MutableStateFlow(MenuUiState())
@@ -61,15 +100,19 @@ class MenuViewModel @Inject constructor(
     private val categoryOrder = MutableStateFlow<Map<String, Int>>(emptyMap())
 
     /**
-     * Chips affichées : uniquement les catégories que ce restaurant utilise
-     * réellement, plus Sauces/Suppléments. Aucune liste en dur.
+     * Chips affichées : les catégories que ce restaurant utilise réellement, suivies
+     * des sections d'options qu'il propose réellement. Aucune liste en dur.
      */
     val categories: StateFlow<List<String>> =
         combine(_uiState.map { it.items }, categoryOrder) { items, order ->
-            val used = items.map { it.category }.filter { it.isNotBlank() }
-            (used + EDITABLE)
+            val used = items.map { it.category }
+                .filter { it.isNotBlank() }
                 .distinct()
                 .sortedWith(compareBy({ order[it] ?: Int.MAX_VALUE }, { it }))
+            val sections = OPTION_SECTIONS.filter { section ->
+                items.any { item -> item.optionGroups.any { sectionOf(it.name) == section } }
+            }
+            used + sections
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -79,14 +122,52 @@ class MenuViewModel @Inject constructor(
     val filteredItems: StateFlow<List<MenuItem>> = _uiState
         .map { state ->
             val cat = state.selectedCategory
-            if (cat == ALL) state.items
-            else state.items.filter { it.category == cat }
+            when {
+                cat == ALL -> state.items
+                cat in OPTION_SECTIONS -> emptyList()
+                else -> state.items.filter { it.category == cat }
+            }
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList(),
         )
+
+    /** Choix de la section sélectionnée, dédupliqués sur (groupe, nom, prix). */
+    val sectionOptions: StateFlow<List<ExtraOption>> = _uiState
+        .map { state ->
+            val section = state.selectedCategory
+            if (section !in OPTION_SECTIONS) return@map emptyList()
+            state.items
+                .flatMap { item ->
+                    item.optionGroups
+                        .filter { sectionOf(it.name) == section }
+                        .flatMap { group -> group.choices.map { group.name to it } }
+                }
+                .groupBy { (group, choice) ->
+                    Triple(group, choice.name.normalizeOptionName(), choice.price)
+                }
+                .map { (_, entries) -> entries.toExtraOption() }
+                .sortedWith(compareBy({ it.group }, { it.name }))
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList(),
+        )
+
+    private fun List<Pair<String, OptionChoice>>.toExtraOption(): ExtraOption {
+        val (group, first) = first()
+        return ExtraOption(
+            group = group,
+            name = first.name,
+            price = first.price,
+            itemCount = size,
+            available = all { it.second.available },
+            isUniform = all { it.second.available == first.available },
+        )
+    }
 
     init {
         viewModelScope.launch {
@@ -126,33 +207,17 @@ class MenuViewModel @Inject constructor(
         }
     }
 
-    /** Création d'une sauce ou d'un supplément — nom + prix, rien d'autre. */
-    fun addExtra(name: String, price: Double, category: String) {
-        if (category !in EDITABLE) return
-        if (price <= 0) {
-            _uiState.update { it.copy(error = "Le prix doit être supérieur à 0 FDJ.") }
-            return
-        }
+    /**
+     * Met une sauce/supplément en rupture (ou la remet en stock) sur tout le menu.
+     * L'écran se rafraîchit tout seul : le snapshot Firestore relit `available`.
+     */
+    fun setExtraAvailability(option: ExtraOption, available: Boolean) {
+        val key = option.name.normalizeOptionName()
         viewModelScope.launch {
-            runCatching {
-                menuRepository.addMenuItem(
-                    MenuItem(
-                        restaurantId = restaurantId,
-                        name = name.trim(),
-                        price = price,
-                        category = category,
-                        preparationTime = 0,
-                    )
-                )
-            }.onFailure { e -> _uiState.update { it.copy(error = e.message) } }
-        }
-    }
-
-    fun deleteExtra(item: MenuItem) {
-        if (item.category !in EDITABLE) return
-        viewModelScope.launch {
-            runCatching { menuRepository.deleteMenuItem(item.id) }
+            _uiState.update { it.copy(togglingChoice = key) }
+            runCatching { menuRepository.setChoiceAvailability(restaurantId, option.name, available) }
                 .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
+            _uiState.update { it.copy(togglingChoice = null) }
         }
     }
 

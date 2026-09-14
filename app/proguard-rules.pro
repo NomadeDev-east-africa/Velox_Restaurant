@@ -10,7 +10,9 @@
 -keep class kotlinx.coroutines.android.** { *; }
 
 # ─── Compose / SnapshotStateList ──────────────────────────────────────────────
--keep class androidx.compose.runtime.** { *; }
+# Compose runtime ne fait pas de reflexion : ses regles consumer (embarquees dans l'AAR)
+# suffisent. Seul SnapshotStateList a besoin d'un keep explicite (etat interne accede
+# par le runtime sans passer par l'API publique).
 -keep class androidx.compose.runtime.snapshots.SnapshotStateList { *; }
 -keepclassmembers class androidx.compose.runtime.snapshots.** { *; }
 -keep class androidx.compose.ui.text.googlefonts.** { *; }
@@ -40,14 +42,17 @@
 }
 
 # ─── Room ─────────────────────────────────────────────────────────────────────
--keep class androidx.room.** { *; }
+# Room genere son code d'acces (KSP) a la compilation, pas de reflexion a l'execution ;
+# ses regles consumer suffisent. On garde seulement nos classes annotees.
 -keep @androidx.room.Entity class * { *; }
 -keep @androidx.room.Dao interface * { *; }
 -keep @androidx.room.Database class * { *; }
 -keepclassmembers @androidx.room.Entity class * { <fields>; }
 
 # ─── Kotlinx Serialization ────────────────────────────────────────────────────
--keep class kotlinx.serialization.** { *; }
+# Seules nos classes @Serializable ont besoin d'etre protegees (serializer genere
+# accede aux champs par reflexion) ; le runtime kotlinx.serialization lui-meme
+# n'en a pas besoin.
 -keepclassmembers @kotlinx.serialization.Serializable class ** {
     *** Companion;
     kotlinx.serialization.KSerializer serializer(...);
@@ -57,10 +62,11 @@
 }
 
 # ─── Coil ─────────────────────────────────────────────────────────────────────
--keep class coil.** { *; }
+# Coil embarque ses propres regles consumer, pas de reflexion sur nos classes.
 -dontwarn coil.**
 
 # ─── WorkManager ──────────────────────────────────────────────────────────────
--keep class androidx.work.** { *; }
+# WorkManager embarque ses propres regles consumer ; on garde juste nos Worker
+# concrets, instancies par nom de classe via reflexion.
 -keep class * extends androidx.work.Worker { *; }
 -keep class * extends androidx.work.CoroutineWorker { *; }

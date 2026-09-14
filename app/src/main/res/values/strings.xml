@@ -1,3 +1,202 @@
 <resources>
-    <string name="app_name">Nomade Restaurant</string>
+    <string name="app_name">Velox Restaurant</string>
+    <string name="default_notification_channel_id" translatable="false">orders_channel_v2</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_orders_name">Nouvelles commandes</string>
+    <string name="notification_channel_orders_description">Notifications pour les nouvelles commandes client</string>
+
+    <!-- Auth / Login -->
+    <string name="login_title">COMMAND CENTER</string>
+    <string name="login_subtitle">Restaurant Manager</string>
+    <string name="login_email_label">EMAIL</string>
+    <string name="login_password_label">MOT DE PASSE</string>
+    <string name="login_button">SE CONNECTER</string>
+    <string name="login_footer">Velox Corp • Restaurant v1.0.1</string>
+    <string name="error_email_password_required">Email et mot de passe requis</string>
+    <string name="error_login_generic">Erreur de connexion</string>
+
+    <!-- Home / bottom navigation -->
+    <string name="nav_orders">ORDERS</string>
+    <string name="nav_menu">MENU</string>
+    <string name="nav_promos">PROMOS</string>
+    <string name="nav_stats">STATS</string>
+    <string name="nav_profile">PROFILE</string>
+    <string name="home_offline_banner">Hors ligne — données en cache</string>
+
+    <!-- Shared components -->
+    <string name="top_bar_command_center">⬛ COMMAND CENTER</string>
+    <string name="status_pending">NOUVELLE</string>
+    <string name="status_accepted">ACCEPTÉE</string>
+    <string name="status_preparing">EN CUISINE</string>
+    <string name="status_ready">PRÊTE</string>
+    <string name="status_delivering">LIVRAISON</string>
+    <string name="status_completed">TERMINÉE</string>
+    <string name="status_cancelled">ANNULÉE</string>
+    <string name="time_ago_now">NOW</string>
+    <string name="time_ago_minutes">%1$dM AGO</string>
+    <string name="time_ago_hours">%1$dH AGO</string>
+
+    <!-- Shared formatting -->
+    <string name="price_fdj">%1$d FDJ</string>
+    <string name="price_plus_fdj">+%1$d FDJ</string>
+    <string name="content_description_change_photo">Changer la photo</string>
+
+    <!-- Menu -->
+    <string name="menu_header">MENU</string>
+    <string name="menu_category_all">Toutes</string>
+    <string name="menu_category_sauces">Sauces</string>
+    <string name="menu_category_supplements">Suppléments</string>
+    <string name="menu_category_legumes">Légumes</string>
+    <string name="menu_options_hint">Proposés en option sur les plats du menu.</string>
+    <string name="menu_options_empty">Aucune option dans cette section pour le moment.</string>
+    <string name="menu_option_out_of_stock">EN RUPTURE</string>
+    <string name="menu_option_mixed_state">ÉTAT MIXTE</string>
+    <string name="menu_price_included">Inclus</string>
+    <string name="menu_promo_badge">PROMO -%1$d%%</string>
+    <plurals name="menu_option_item_count">
+        <item quantity="one">%1$d PLAT</item>
+        <item quantity="other">%1$d PLATS</item>
+    </plurals>
+
+    <!-- Generic actions -->
+    <string name="action_cancel">Annuler</string>
+
+    <!-- Orders -->
+    <string name="orders_header_kicker">OPERATION MANAGEMENT</string>
+    <string name="orders_header_title">GESTION DES\nCOMMANDES</string>
+    <string name="orders_system_active">SYSTEM ACTIVE</string>
+    <string name="orders_tab_new">NOUVELLES</string>
+    <string name="orders_tab_active">EN COURS</string>
+    <string name="orders_empty_new">Aucune nouvelle commande</string>
+    <string name="orders_empty_active">Aucune commande en cours</string>
+    <string name="orders_incoming_signal">INCOMING SIGNAL</string>
+    <string name="orders_id_format">ORD-%1$s</string>
+    <string name="orders_id_hash_format">#ORD-%1$s</string>
+    <string name="orders_customer">CUSTOMER</string>
+    <string name="orders_contact">CONTACT</string>
+    <string name="orders_payload">PAYLOAD</string>
+    <string name="orders_value">VALUE</string>
+    <string name="orders_delivery_fee_line">+%1$d FDJ livraison</string>
+    <string name="orders_accept_button">ACCEPTER  ›</string>
+    <string name="orders_reject_button">Refuser</string>
+    <string name="orders_customer_label">Client: %1$s</string>
+    <string name="orders_start_prep_button">COMMENCER PRÉPARATION</string>
+    <string name="orders_mark_ready_button">PRÊT POUR RETRAIT  ›</string>
+    <string name="orders_resend_sending">ENVOI EN COURS…</string>
+    <string name="orders_resend_cooldown">RELANCER DANS %1$ds</string>
+    <string name="orders_resend_button">RELANCER VERS LES LIVREURS</string>
+    <string name="orders_resend_count">Relancée %1$d fois</string>
+    <string name="orders_driver_en_route">✓ LIVREUR EN ROUTE POUR RETRAIT</string>
+    <string name="orders_item_quantity">%1$d×</string>
+    <string name="orders_tag_sauce">SAUCE</string>
+    <string name="orders_tag_extra">SUPPLÉMENT</string>
+    <string name="orders_cancel_dialog_title">Motif d\'annulation</string>
+    <string name="orders_cancel_dialog_placeholder">Ex: Rupture de stock…</string>
+    <string name="orders_cancel_dialog_confirm">Annuler la commande</string>
+    <string name="orders_cancel_dialog_back">Retour</string>
+    <string name="error_mark_ready_notification_failed">Commande marquée prête, mais l\'envoi de la notification a échoué. Réessayez.</string>
+    <string name="error_resend_failed">Échec de la relance</string>
+    <plurals name="orders_item_count">
+        <item quantity="one">%1$d Item</item>
+        <item quantity="other">%1$d Items</item>
+    </plurals>
+
+    <!-- Profile -->
+    <string name="profile_status_open">OUVERT</string>
+    <string name="profile_status_closed">FERMÉ</string>
+    <string name="profile_toggle_open_label">Restaurant ouvert</string>
+    <string name="profile_section_information">INFORMATIONS</string>
+    <string name="profile_label_email">EMAIL CONTACT</string>
+    <string name="profile_label_phone">PHONE LINE</string>
+    <string name="profile_label_address">HEADQUARTERS</string>
+    <string name="profile_section_stats">STATISTIQUES GLOBALES</string>
+    <string name="profile_stat_total_orders">Total Commandes</string>
+    <string name="profile_stat_total_revenue">Revenus Totaux</string>
+    <string name="profile_section_language">LANGUE</string>
+    <string name="profile_logout_button">LOGOUT TERMINAL</string>
+    <string name="profile_footer_version">Velox Restaurant v1.0.1</string>
+    <string name="profile_placeholder_dash">—</string>
+    <string name="profile_logout_dialog_title">Déconnexion</string>
+    <string name="profile_logout_dialog_text">Confirmer la déconnexion du terminal ?</string>
+    <string name="profile_logout_dialog_confirm">Déconnecter</string>
+
+    <!-- Language names (each shown in its own language, not translated) -->
+    <string name="language_name_fr" translatable="false">Français</string>
+    <string name="language_name_en" translatable="false">English</string>
+    <string name="language_name_ar" translatable="false">العربية</string>
+
+    <!-- Promotions -->
+    <string name="promotions_header">PROMOTIONS</string>
+    <string name="promotions_active_count">%1$d ACTIVES</string>
+    <string name="promotions_empty_title">Aucune promotion</string>
+    <string name="promotions_empty_subtitle">Appuyez sur + pour en créer une</string>
+    <string name="promotions_fab_content_description">Ajouter une promotion</string>
+    <string name="promotions_delete_dialog_title">Supprimer la promotion</string>
+    <string name="promotions_delete_dialog_text">Supprimer « %1$s » ?</string>
+    <string name="promotions_delete_dialog_confirm">Supprimer</string>
+    <string name="promotions_add_title">NOUVELLE PROMOTION</string>
+    <string name="promotions_select_item_label">Sélectionner un plat</string>
+    <string name="promotions_no_items_available">Aucun plat disponible</string>
+    <string name="promotions_discount_label">Remise (%)</string>
+    <string name="promotions_label_field">Libellé affiché</string>
+    <string name="promotions_label_placeholder">ex: Promo weekend -20%</string>
+    <string name="promotions_expiry_date_label">Date d\'expiration</string>
+    <string name="promotions_expiry_days_label">Expire dans (jours)</string>
+    <string name="promotions_create_button">CRÉER LA PROMOTION</string>
+    <string name="promotions_discount_percent">%1$d%%</string>
+    <string name="promotions_expired">EXPIRÉ</string>
+    <string name="promotions_until_date">jusqu\'au %1$s</string>
+
+    <!-- Stats -->
+    <string name="stats_period_day">Jour</string>
+    <string name="stats_period_week">Semaine</string>
+    <string name="stats_period_month">Mois</string>
+    <string name="stats_period_year">Année</string>
+    <string name="stats_monthly_detail_title">DÉTAIL MENSUEL %1$d</string>
+    <string name="stats_weekly_revenue_title">REVENUS DES 7 DERNIERS JOURS</string>
+    <string name="stats_top_items_title">TOP 5 PLATS — CE MOIS-CI</string>
+    <string name="stats_since_opening_title">DEPUIS L\'OUVERTURE</string>
+    <string name="stats_completed_orders_label">Commandes honorées</string>
+    <string name="stats_revenue_label">Chiffre d\'affaires</string>
+    <string name="stats_avg_rating_label">Note moyenne</string>
+    <string name="stats_amount_fdj">%1$s FDJ</string>
+    <string name="stats_hero_completed_orders">COMMANDES HONORÉES</string>
+    <string name="stats_hero_revenue">CHIFFRE D\'AFFAIRES</string>
+    <string name="stats_hero_revenue_unit">FDJ — hors livraison</string>
+    <string name="stats_mini_avg_basket">PANIER MOYEN</string>
+    <string name="stats_mini_cancelled">ANNULÉES</string>
+    <string name="stats_cancelled_value">%1$d · %2$s%%</string>
+    <string name="stats_table_month">MOIS</string>
+    <string name="stats_table_orders">CMD</string>
+    <string name="stats_table_revenue">CA (FDJ)</string>
+    <string name="stats_table_cancelled">ANN.</string>
+    <string name="stats_table_total">TOTAL</string>
+    <plurals name="stats_sold_count">
+        <item quantity="one">%1$d VENDU</item>
+        <item quantity="other">%1$d VENDUS</item>
+    </plurals>
+    <string-array name="stats_months">
+        <item>Janvier</item>
+        <item>Février</item>
+        <item>Mars</item>
+        <item>Avril</item>
+        <item>Mai</item>
+        <item>Juin</item>
+        <item>Juillet</item>
+        <item>Août</item>
+        <item>Septembre</item>
+        <item>Octobre</item>
+        <item>Novembre</item>
+        <item>Décembre</item>
+    </string-array>
+    <string-array name="stats_weekdays_short">
+        <item>Dim</item>
+        <item>Lun</item>
+        <item>Mar</item>
+        <item>Mer</item>
+        <item>Jeu</item>
+        <item>Ven</item>
+        <item>Sam</item>
+    </string-array>
 </resources>

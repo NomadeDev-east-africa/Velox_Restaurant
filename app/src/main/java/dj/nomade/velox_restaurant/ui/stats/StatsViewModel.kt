@@ -1,7 +1,11 @@
 package dj.nomade.velox_restaurant.ui.stats
 
+import android.content.Context
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dj.nomade.velox_restaurant.R
 import dj.nomade.velox_restaurant.data.model.Order
 import dj.nomade.velox_restaurant.data.model.OrderStatus
 import dj.nomade.velox_restaurant.data.model.PeriodStats
@@ -23,11 +27,11 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import javax.inject.Inject
 
-enum class StatsPeriod(val label: String) {
-    DAY("Jour"),
-    WEEK("Semaine"),
-    MONTH("Mois"),
-    YEAR("Année"),
+enum class StatsPeriod(@StringRes val labelRes: Int) {
+    DAY(R.string.stats_period_day),
+    WEEK(R.string.stats_period_week),
+    MONTH(R.string.stats_period_month),
+    YEAR(R.string.stats_period_year),
 }
 
 data class DayRevenue(val label: String, val amount: Double)
@@ -62,6 +66,7 @@ class StatsViewModel @Inject constructor(
     private val restaurantRepository: RestaurantRepository,
     private val authRepository: AuthRepository,
     private val crashlytics: FirebaseCrashlytics,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StatsUiState())
@@ -155,10 +160,7 @@ class StatsViewModel @Inject constructor(
 
     /** Les 12 mois de l'année en cours, en parallèle. */
     private suspend fun buildMonthlyRows(): List<MonthRow> = coroutineScope {
-        val labels = listOf(
-            "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-            "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
-        )
+        val labels = context.resources.getStringArray(R.array.stats_months)
         val year = Calendar.getInstance().get(Calendar.YEAR)
         val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
         (0..currentMonth).map { month ->
@@ -178,7 +180,7 @@ class StatsViewModel @Inject constructor(
     }
 
     private suspend fun buildWeeklyData(): List<DayRevenue> {
-        val days = listOf("Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam")
+        val days = context.resources.getStringArray(R.array.stats_weekdays_short)
         val startOfToday = startOfDayCalendar()
         val weekStart = (startOfToday.clone() as Calendar).apply {
             add(Calendar.DAY_OF_YEAR, -6)

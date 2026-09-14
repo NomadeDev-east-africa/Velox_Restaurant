@@ -15,6 +15,17 @@ interface MenuRepository {
     /** Ne touche que `imageUrl` — le reste du plat (nom, prix, description) est préservé. */
     suspend fun updateItemImage(itemId: String, imageUrl: String)
 
+    /**
+     * Met une sauce/supplément en rupture (ou la remet en stock) pour **tout** le
+     * restaurant : réécrit le champ `optionGroups` de chaque plat qui propose un choix
+     * de ce nom, en un seul batch. Retourne le nombre de plats impactés.
+     */
+    suspend fun setChoiceAvailability(
+        restaurantId: String,
+        choiceName: String,
+        available: Boolean,
+    ): Int
+
     // Cache Room
     suspend fun cacheMenuItems(items: List<MenuItem>)
     fun streamCachedMenuItems(restaurantId: String): Flow<List<MenuItem>>

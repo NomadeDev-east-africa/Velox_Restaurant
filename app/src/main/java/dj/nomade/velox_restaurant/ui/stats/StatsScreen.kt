@@ -34,12 +34,15 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dj.nomade.velox_restaurant.R
 import dj.nomade.velox_restaurant.data.model.PeriodStats
 import dj.nomade.velox_restaurant.ui.theme.InterFontFamily
 import dj.nomade.velox_restaurant.ui.theme.ManropeFontFamily
@@ -82,7 +85,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatsPeriod.entries.forEach { period ->
                 PeriodChip(
-                    label = period.label,
+                    label = stringResource(period.labelRes),
                     selected = state.period == period,
                     onClick = { viewModel.selectPeriod(period) },
                     modifier = Modifier.weight(1f),
@@ -99,14 +102,14 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
 
         // ── Tableau comptable annuel ──────────────────────────────────────
         if (state.period == StatsPeriod.YEAR && state.monthlyRows.isNotEmpty()) {
-            SectionTitle("DÉTAIL MENSUEL ${state.year}")
+            SectionTitle(stringResource(R.string.stats_monthly_detail_title, state.year))
             Spacer(Modifier.height(10.dp))
             MonthlyTable(rows = state.monthlyRows, total = state.periodStats)
             Spacer(Modifier.height(24.dp))
         }
 
         // ── Bar chart 7 jours ─────────────────────────────────────────────
-        SectionTitle("REVENUS DES 7 DERNIERS JOURS")
+        SectionTitle(stringResource(R.string.stats_weekly_revenue_title))
         Spacer(Modifier.height(12.dp))
         RevenueBarChart(
             data = state.weeklyRevenue,
@@ -121,7 +124,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
 
         // ── Top 5 plats ───────────────────────────────────────────────────
         if (state.topItems.isNotEmpty()) {
-            SectionTitle("TOP 5 PLATS — CE MOIS-CI")
+            SectionTitle(stringResource(R.string.stats_top_items_title))
             Spacer(Modifier.height(10.dp))
             state.topItems.forEachIndexed { index, item ->
                 TopItemRow(rank = index + 1, item = item)
@@ -131,24 +134,24 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
         }
 
         // ── Cumuls depuis l'ouverture ─────────────────────────────────────
-        SectionTitle("DEPUIS L'OUVERTURE")
+        SectionTitle(stringResource(R.string.stats_since_opening_title))
         Spacer(Modifier.height(10.dp))
         StatCard(
             icon = Icons.Default.Receipt,
-            label = "Commandes honorées",
+            label = stringResource(R.string.stats_completed_orders_label),
             value = state.totalOrders.toString(),
         )
         Spacer(Modifier.height(8.dp))
         StatCard(
             icon = Icons.Default.MonetizationOn,
-            label = "Chiffre d'affaires",
-            value = "${fdj(state.totalRevenue)} FDJ",
+            label = stringResource(R.string.stats_revenue_label),
+            value = stringResource(R.string.stats_amount_fdj, fdj(state.totalRevenue)),
             valueColor = NeonGreen,
         )
         Spacer(Modifier.height(8.dp))
         StatCard(
             icon = Icons.Default.Star,
-            label = "Note moyenne",
+            label = stringResource(R.string.stats_avg_rating_label),
             value = String.format(Locale.FRANCE, "%.1f", state.avgRating),
         )
 
@@ -194,14 +197,14 @@ private fun PeriodSummary(stats: PeriodStats, isLoading: Boolean) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 HeroCard(
-                    label = "COMMANDES HONORÉES",
+                    label = stringResource(R.string.stats_hero_completed_orders),
                     value = stats.completedCount.toString(),
                     modifier = Modifier.weight(1f),
                 )
                 HeroCard(
-                    label = "CHIFFRE D'AFFAIRES",
+                    label = stringResource(R.string.stats_hero_revenue),
                     value = fdj(stats.revenue),
-                    unit = "FDJ — hors livraison",
+                    unit = stringResource(R.string.stats_hero_revenue_unit),
                     modifier = Modifier.weight(1f),
                     highlight = true,
                 )
@@ -212,15 +215,17 @@ private fun PeriodSummary(stats: PeriodStats, isLoading: Boolean) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 MiniCard(
-                    label = "PANIER MOYEN",
-                    value = "${fdj(stats.averageBasket)} FDJ",
+                    label = stringResource(R.string.stats_mini_avg_basket),
+                    value = stringResource(R.string.stats_amount_fdj, fdj(stats.averageBasket)),
                     modifier = Modifier.weight(1f),
                 )
                 MiniCard(
-                    label = "ANNULÉES",
-                    value = "${stats.cancelledCount} · ${
-                        String.format(Locale.FRANCE, "%.0f", stats.cancellationRate)
-                    }%",
+                    label = stringResource(R.string.stats_mini_cancelled),
+                    value = stringResource(
+                        R.string.stats_cancelled_value,
+                        stats.cancelledCount,
+                        String.format(Locale.FRANCE, "%.0f", stats.cancellationRate),
+                    ),
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -250,10 +255,10 @@ private fun MonthlyTable(rows: List<MonthRow>, total: PeriodStats) {
             .padding(vertical = 6.dp),
     ) {
         MonthlyRowLayout(
-            month = "MOIS",
-            orders = "CMD",
-            revenue = "CA (FDJ)",
-            cancelled = "ANN.",
+            month = stringResource(R.string.stats_table_month),
+            orders = stringResource(R.string.stats_table_orders),
+            revenue = stringResource(R.string.stats_table_revenue),
+            cancelled = stringResource(R.string.stats_table_cancelled),
             isHeader = true,
         )
         rows.forEach { row ->
@@ -272,7 +277,7 @@ private fun MonthlyTable(rows: List<MonthRow>, total: PeriodStats) {
                 .background(SurfaceL3),
         )
         MonthlyRowLayout(
-            month = "TOTAL",
+            month = stringResource(R.string.stats_table_total),
             orders = total.completedCount.toString(),
             revenue = fdj(total.revenue),
             cancelled = total.cancelledCount.toString(),
@@ -461,7 +466,7 @@ private fun TopItemRow(rank: Int, item: TopItem) {
                 .padding(horizontal = 10.dp, vertical = 4.dp),
         ) {
             Text(
-                "${item.count} VENDU${if (item.count > 1) "S" else ""}",
+                pluralStringResource(R.plurals.stats_sold_count, item.count, item.count),
                 color = OnNeonGreen,
                 fontSize = 10.sp,
                 fontFamily = InterFontFamily,

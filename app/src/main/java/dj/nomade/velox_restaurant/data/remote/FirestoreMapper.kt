@@ -6,6 +6,7 @@ import dj.nomade.velox_restaurant.data.model.OrderItem
 import dj.nomade.velox_restaurant.data.model.OrderStatus
 import dj.nomade.velox_restaurant.data.model.Promotion
 import dj.nomade.velox_restaurant.data.model.Restaurant
+import dj.nomade.velox_restaurant.data.model.parseOptionGroups
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.GeoPoint
@@ -68,6 +69,8 @@ fun DocumentSnapshot.toOrder(): Order {
         cancellationReason = getString("cancellationReason"),
         createdAt = getTimestamp("createdAt")?.toEpochMillis(),
         updatedAt = getTimestamp("updatedAt")?.toEpochMillis(),
+        lastResendAt = getTimestamp("lastResendAt")?.toEpochMillis(),
+        resendCount = getLong("resendCount")?.toInt() ?: 0,
     )
 }
 
@@ -81,6 +84,7 @@ fun DocumentSnapshot.toMenuItem(): MenuItem = MenuItem(
     category = getString("category") ?: "",
     isAvailable = getBoolean("isAvailable") ?: true,
     preparationTime = getLong("preparationTime")?.toInt() ?: 15,
+    optionGroups = parseOptionGroups(get("optionGroups")),
     createdAt = getTimestamp("createdAt")?.toEpochMillis(),
     updatedAt = getTimestamp("updatedAt")?.toEpochMillis(),
 )

@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
+import dj.nomade.velox_restaurant.data.local.MIGRATION_2_3
 import dj.nomade.velox_restaurant.data.local.RestaurantDatabase
 import dagger.Module
 import dagger.Provides
@@ -31,7 +32,12 @@ object AppModule {
             context,
             RestaurantDatabase::class.java,
             "restaurant_db"
-        ).fallbackToDestructiveMigration(dropAllTables = true).build()
+        )
+            // 2 → 3 migre sans perte ; le repli destructif ne couvre que les
+            // versions antérieures, pour lesquelles aucun chemin n'est écrit.
+            .addMigrations(MIGRATION_2_3)
+            .fallbackToDestructiveMigration(dropAllTables = true)
+            .build()
 
     @Provides
     fun provideOrderDao(db: RestaurantDatabase) = db.orderDao()

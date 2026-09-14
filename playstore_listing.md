@@ -1,4 +1,4 @@
-# Fiche Play Store — Nomade Restaurant
+# Fiche Play Store — Velox Restaurant
 
 ---
 
@@ -6,7 +6,7 @@
 
 | Champ | Valeur |
 |---|---|
-| **Nom de l'app** | Nomade Restaurant |
+| **Nom de l'app** | Velox Restaurant |
 | **Package** | dj.nomade.velox_restaurant |
 | **Catégorie** | Business |
 | **Type** | Application gratuite (accès sur invitation) |
@@ -18,7 +18,7 @@
 ## Titre (≤ 30 caractères)
 
 ```
-Nomade Restaurant
+Velox Restaurant
 ```
 
 ---
@@ -26,7 +26,7 @@ Nomade Restaurant
 ## Description courte (≤ 80 caractères)
 
 ```
-Gérez vos commandes, menu et stats en temps réel — Nomade253.
+Gérez vos commandes, menu et stats en temps réel — Velox Corp.
 ```
 
 ---
@@ -34,7 +34,7 @@ Gérez vos commandes, menu et stats en temps réel — Nomade253.
 ## Description longue (≤ 4000 caractères)
 
 ```
-Nomade Restaurant est le tableau de bord officiel des restaurants partenaires Nomade253.
+Velox Restaurant est le tableau de bord officiel des restaurants partenaires Velox Corp.
 
 Conçu pour les gérants et responsables de restaurant, il centralise toutes les opérations en une seule application : réception des commandes en temps réel, gestion du menu, suivi des performances et coordination avec les livreurs.
 
@@ -87,16 +87,16 @@ Conçu pour les gérants et responsables de restaurant, il centralise toutes les
 ──────────────────────────────
 🔒 SÉCURITÉ & FIABILITÉ
 ──────────────────────────────
-• Accès restreint aux restaurants partenaires Nomade253 (compte requis)
+• Accès restreint aux restaurants partenaires Velox Corp (compte requis)
 • Authentification sécurisée via Firebase Auth
 • Données synchronisées en temps réel via Firebase Firestore
 • Application développée nativement pour Android
 
 ──────────────────────────────
 
-Nomade Restaurant est réservé aux restaurants enregistrés sur la plateforme Nomade253. Pour devenir partenaire, contactez-nous à l'adresse indiquée sur notre site.
+Velox Restaurant est réservé aux restaurants enregistrés sur la plateforme Velox Corp. Pour devenir partenaire, contactez-nous à l'adresse indiquée sur notre site.
 
-© 2025 Nomade253 — Djibouti
+© 2025 Velox Corp — Djibouti
 ```
 
 ---
@@ -104,7 +104,7 @@ Nomade Restaurant est réservé aux restaurants enregistrés sur la plateforme N
 ## Mots-clés (pour l'ASO)
 
 ```
-restaurant, commandes, livraison, gestion, menu, Djibouti, Nomade253,
+restaurant, commandes, livraison, gestion, menu, Djibouti, Velox Corp,
 tableau de bord, restaurateur, food delivery, business
 ```
 
@@ -125,18 +125,28 @@ Répondre **NON** à toutes les questions sensibles :
 
 ## URL Privacy Policy
 
-À renseigner dans Play Console :
+À renseigner dans Play Console → *Règles de confidentialité* :
 ```
-https://nomade253.com/privacy-policy
+https://veloxdj.com/confidentialite-restaurant
 ```
-*(ou l'URL où tu héberges le fichier privacy_policy.md)*
+
+## URL de suppression des données
+
+À renseigner dans Play Console → *Sécurité des données → Suppression du compte* :
+```
+https://veloxdj.com/suppression-donnees-restaurant
+```
+
+*Ces deux pages sont hébergées par le site Velox (projet `Site Velox`, routes
+`app/confidentialite-restaurant` et `app/suppression-donnees-restaurant`). Elles remplacent
+le fichier local `privacy_policy.md`, qui n'est plus la version de référence.*
 
 ---
 
 ## Coordonnées développeur (obligatoires dans Play Console)
 
 ```
-Nom     : Nomade253
+Nom     : Velox Corp
 Email   : devchirdon@gmail.com
 Site    : nomade253.com (ou à compléter)
 ```
@@ -154,4 +164,4 @@ Site    : nomade253.com (ou à compléter)
 1. Écran des commandes (NOUVELLES + EN COURS)
 2. Écran du menu avec plats et photos
 3. Écran des stats (graphique + KPIs)
-4. Écran de login (branding Nomade253)
+4. Écran de login (branding Velox Corp)

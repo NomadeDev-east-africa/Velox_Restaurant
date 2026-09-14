@@ -2,6 +2,7 @@ package dj.nomade.velox_restaurant.domain.repository
 
 import dj.nomade.velox_restaurant.data.model.Order
 import dj.nomade.velox_restaurant.data.model.PeriodStats
+import dj.nomade.velox_restaurant.data.model.ResendResult
 import kotlinx.coroutines.flow.Flow
 
 interface OrderRepository {
@@ -18,6 +19,13 @@ interface OrderRepository {
 
     // Cloud Function : notifie livreurs disponibles + client
     suspend fun sendReadyNotifications(orderId: String): Result<Unit>
+
+    /**
+     * Cloud Function dédiée `resendOrderToDrivers` : relance l'offre vers les
+     * livreurs actuellement en ligne, sans rejouer [sendReadyNotifications]
+     * (qui rechangerait le statut et gonflerait les stats restaurant).
+     */
+    suspend fun resendToDrivers(orderId: String): Result<ResendResult>
 
     // Stats
     suspend fun getOrdersForDay(restaurantId: String, startOfDayMs: Long): List<Order>

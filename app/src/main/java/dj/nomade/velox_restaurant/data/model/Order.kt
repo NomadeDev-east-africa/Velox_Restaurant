@@ -37,6 +37,9 @@ data class Order(
     val cancellationReason: String? = null,
     val createdAt: Long? = null,
     val updatedAt: Long? = null,
+    /** Dernière relance de notification vers les livreurs (bouton "Relancer"). */
+    val lastResendAt: Long? = null,
+    val resendCount: Int = 0,
 ) {
     val isActive: Boolean get() = status in OrderStatus.active
     val itemCount: Int get() = items.sumOf { it.quantity }

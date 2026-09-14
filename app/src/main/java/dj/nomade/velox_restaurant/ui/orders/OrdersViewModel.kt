@@ -1,13 +1,17 @@
 package dj.nomade.velox_restaurant.ui.orders
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dj.nomade.velox_restaurant.R
 import dj.nomade.velox_restaurant.data.model.Order
 import dj.nomade.velox_restaurant.data.model.OrderStatus
 import dj.nomade.velox_restaurant.domain.repository.AuthRepository
 import dj.nomade.velox_restaurant.domain.repository.OrderRepository
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +24,8 @@ data class OrdersUiState(
     val pendingOrders: List<Order> = emptyList(),
     val activeOrders: List<Order> = emptyList(),
     val isLoading: Boolean = true,
+    /** Id de la commande dont la relance vers les livreurs est en cours d'envoi. */
+    val resendingOrderId: String? = null,
     val error: String? = null,
 )
 
@@ -28,6 +34,7 @@ class OrdersViewModel @Inject constructor(
     private val orderRepository: OrderRepository,
     private val authRepository: AuthRepository,
     private val crashlytics: FirebaseCrashlytics,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OrdersUiState())
@@ -35,8 +42,20 @@ class OrdersViewModel @Inject constructor(
 
     private val restaurantId = authRepository.currentUserId().orEmpty()
 
+    /** Dernier instantané brut reçu, pour ré-appliquer le filtre d'ancienneté sans attendre une nouvelle émission Firestore. */
+    private var lastOrders: List<Order> = emptyList()
+
     init {
         loadCacheThenStream()
+        // Une commande "en cours" (ex. ready sans livreur) peut rester bloquée
+        // des jours sans qu'aucune écriture Firestore ne survienne entre-temps :
+        // sans ce tick, le filtre de 24h ne se ré-évaluerait jamais tout seul.
+        viewModelScope.launch {
+            while (true) {
+                delay(15 * 60 * 1_000L)
+                splitAndUpdate(lastOrders, isLoading = _uiState.value.isLoading)
+            }
+        }
     }
 
     private fun loadCacheThenStream() {
@@ -62,14 +81,28 @@ class OrdersViewModel @Inject constructor(
     }
 
     private fun splitAndUpdate(orders: List<Order>, isLoading: Boolean = false) {
+        lastOrders = orders
+        // Masquage d'affichage uniquement : le statut Firestore de la commande ne
+        // bouge pas, elle disparaît juste de l'écran "En cours" au bout de 24h pour
+        // ne pas laisser une commande bloquée (ex. ready sans livreur) polluer la
+        // liste indéfiniment. Les commandes "Nouvelles" (jamais acceptées) restent
+        // toujours visibles : les cacher serait dangereux, un client attend encore.
+        val staleCutoffMs = System.currentTimeMillis() - STALE_ACTIVE_ORDER_MAX_AGE_MS
         _uiState.update {
             it.copy(
                 isLoading = isLoading,
                 pendingOrders = orders.filter { o -> o.status == OrderStatus.PENDING },
-                activeOrders = orders.filter { o -> o.status != OrderStatus.PENDING },
+                activeOrders = orders.filter { o ->
+                    o.status != OrderStatus.PENDING &&
+                        (o.createdAt == null || o.createdAt >= staleCutoffMs)
+                },
                 error = null,
             )
         }
+    }
+
+    companion object {
+        private const val STALE_ACTIVE_ORDER_MAX_AGE_MS = 24L * 60 * 60 * 1_000L
     }
 
     fun acceptOrder(orderId: String, prepTimeMinutes: Int = 20) {
@@ -113,9 +146,27 @@ class OrdersViewModel @Inject constructor(
                     crashlytics.log("sendReadyNotifications failed — orderId=$orderId")
                     crashlytics.recordException(e)
                     _uiState.update {
-                        it.copy(error = "Commande marquée prête, mais l'envoi de la notification a échoué. Réessayez.")
+                        it.copy(error = context.getString(R.string.error_mark_ready_notification_failed))
                     }
                 }
+        }
+    }
+
+    /**
+     * Relance l'offre vers les livreurs actuellement en ligne, sans repasser par
+     * [markReady] : le statut, les stats restaurant et la notif client ne bougent pas.
+     */
+    fun resendToDrivers(orderId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(resendingOrderId = orderId) }
+            orderRepository.resendToDrivers(orderId)
+                .onSuccess { result -> _uiState.update { it.copy(error = result.message) } }
+                .onFailure { e ->
+                    crashlytics.log("resendToDrivers failed — orderId=$orderId")
+                    crashlytics.recordException(e)
+                    _uiState.update { it.copy(error = e.message ?: context.getString(R.string.error_resend_failed)) }
+                }
+            _uiState.update { it.copy(resendingOrderId = null) }
         }
     }
 

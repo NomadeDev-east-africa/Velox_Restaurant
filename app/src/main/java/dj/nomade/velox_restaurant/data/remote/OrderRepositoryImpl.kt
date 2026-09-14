@@ -8,6 +8,7 @@ import dj.nomade.velox_restaurant.data.local.entity.toEntity
 import dj.nomade.velox_restaurant.data.model.Order
 import dj.nomade.velox_restaurant.data.model.OrderStatus
 import dj.nomade.velox_restaurant.data.model.PeriodStats
+import dj.nomade.velox_restaurant.data.model.ResendResult
 import dj.nomade.velox_restaurant.domain.repository.OrderRepository
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.AggregateField
@@ -149,6 +150,20 @@ class OrderRepositoryImpl @Inject constructor(
                 .call(mapOf("orderId" to orderId))
                 .await()
         }
+    }
+
+    override suspend fun resendToDrivers(orderId: String): Result<ResendResult> = runCatching {
+        val result = functions
+            .getHttpsCallable("resendOrderToDrivers")
+            .call(mapOf("orderId" to orderId))
+            .await()
+        @Suppress("UNCHECKED_CAST")
+        val data = result.getData() as? Map<String, Any?> ?: emptyMap()
+        ResendResult(
+            success = data["success"] as? Boolean ?: false,
+            driversNotified = (data["driversNotified"] as? Number)?.toInt() ?: 0,
+            message = data["message"] as? String ?: "",
+        )
     }
 
     private suspend fun cancelDeliveryNotifications(orderId: String) {
