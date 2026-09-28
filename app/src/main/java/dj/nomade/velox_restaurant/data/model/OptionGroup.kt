@@ -27,6 +27,12 @@ data class OptionGroup(
 /** `price` = supplément en FDJ ajouté au prix de base du plat (0 = inclus). */
 @Serializable
 data class OptionChoice(
+    /**
+     * Identifiant stable généré par l'admin (`ch_xxxxxxxx`), recopié par l'app client dans
+     * chaque commande (`choiceId`) pour l'intégration Loyverse. Absent sur les anciens plats.
+     * Doit survivre à toute réécriture de `optionGroups`.
+     */
+    val id: String? = null,
     val name: String = "",
     val price: Double = 0.0,
     /** Absent en base = disponible. N'est écrit que lorsqu'il vaut `false`. */
@@ -57,6 +63,7 @@ private fun Any?.toOptionChoice(): OptionChoice? {
     val map = this as? Map<*, *> ?: return null
     val name = map["name"] as? String ?: return null
     return OptionChoice(
+        id = (map["id"] as? String)?.takeIf { it.isNotBlank() },
         name = name,
         price = (map["price"] as? Number)?.toDouble() ?: 0.0,
         available = map["available"] as? Boolean ?: true,
@@ -76,6 +83,7 @@ fun List<OptionGroup>.toFirestoreList(): List<Map<String, Any?>> = map { group -
         if (group.maxChoices > 0) put("maxChoices", group.maxChoices)
         put("choices", group.choices.map { choice ->
             buildMap<String, Any?> {
+                choice.id?.let { put("id", it) }
                 put("name", choice.name)
                 put("price", choice.price)
                 if (!choice.available) put("available", false)
