@@ -3,6 +3,7 @@ package dj.nomade.velox_restaurant.data.remote
 import dj.nomade.velox_restaurant.data.model.MenuItem
 import dj.nomade.velox_restaurant.data.model.Order
 import dj.nomade.velox_restaurant.data.model.OrderItem
+import dj.nomade.velox_restaurant.data.model.OrderItemOption
 import dj.nomade.velox_restaurant.data.model.OrderStatus
 import dj.nomade.velox_restaurant.data.model.Promotion
 import dj.nomade.velox_restaurant.data.model.Restaurant
@@ -107,16 +108,26 @@ fun DocumentSnapshot.toPromotion(): Promotion = Promotion(
 private fun Any?.toOrderItem(): OrderItem? {
     val map = this as? Map<String, Any> ?: return null
 
-    fun extractStringList(key: String): List<String> {
+    // Chaque option est soit une simple chaîne (anciennes commandes), soit une map
+    // `{name, price, isSelected, group?, choiceId?}` écrite par l'app client.
+    fun extractOptions(key: String, isSauce: Boolean): List<OrderItemOption> {
         val raw = map[key] as? List<*> ?: return emptyList()
         return raw.mapNotNull { entry ->
             when (entry) {
-                is String -> entry
-                is Map<*, *> -> entry["name"] as? String
+                is String -> OrderItemOption(entry, group = null, isSauce = isSauce)
+                is Map<*, *> -> {
+                    // Un choix explicitement non sélectionné n'a pas été commandé.
+                    if (entry["isSelected"] == false) return@mapNotNull null
+                    val name = entry["name"] as? String ?: return@mapNotNull null
+                    OrderItemOption(name, group = entry["group"] as? String, isSauce = isSauce)
+                }
                 else -> null
             }
         }
     }
+
+    val sauces = extractOptions("sauces", isSauce = true)
+    val extras = extractOptions("extras", isSauce = false)
 
     return OrderItem(
         name = map["name"] as? String ?: return null,
@@ -125,8 +136,9 @@ private fun Any?.toOrderItem(): OrderItem? {
         imageUrl = map["imageUrl"] as? String ?: "",
         category = map["category"] as? String ?: "",
         preparationTime = (map["preparationTime"] as? Long)?.toInt() ?: 0,
-        sauces = extractStringList("sauces"),
-        extras = extractStringList("extras"),
+        sauces = sauces.map { it.name },
+        extras = extras.map { it.name },
+        options = sauces + extras,
     )
 }
 

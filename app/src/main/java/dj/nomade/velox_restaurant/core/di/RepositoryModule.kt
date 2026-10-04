@@ -2,12 +2,14 @@ package dj.nomade.velox_restaurant.core.di
 
 import dj.nomade.velox_restaurant.data.remote.AuthRepositoryImpl
 import dj.nomade.velox_restaurant.data.remote.CategoryRepositoryImpl
+import dj.nomade.velox_restaurant.data.remote.LoyverseRepositoryImpl
 import dj.nomade.velox_restaurant.data.remote.MenuRepositoryImpl
 import dj.nomade.velox_restaurant.data.remote.OrderRepositoryImpl
 import dj.nomade.velox_restaurant.data.remote.PromotionRepositoryImpl
 import dj.nomade.velox_restaurant.data.remote.RestaurantRepositoryImpl
 import dj.nomade.velox_restaurant.domain.repository.AuthRepository
 import dj.nomade.velox_restaurant.domain.repository.CategoryRepository
+import dj.nomade.velox_restaurant.domain.repository.LoyverseRepository
 import dj.nomade.velox_restaurant.domain.repository.MenuRepository
 import dj.nomade.velox_restaurant.domain.repository.OrderRepository
 import dj.nomade.velox_restaurant.domain.repository.PromotionRepository
@@ -39,4 +41,7 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindCategoryRepository(impl: CategoryRepositoryImpl): CategoryRepository
+
+    @Binds @Singleton
+    abstract fun bindLoyverseRepository(impl: LoyverseRepositoryImpl): LoyverseRepository
 }

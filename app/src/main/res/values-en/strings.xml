@@ -193,4 +193,18 @@
         <item>Fri</item>
         <item>Sat</item>
     </string-array>
+    <!-- Loyverse POS -->
+    <string name="profile_section_loyverse">LOYVERSE POS</string>
+    <string name="loyverse_status_not_connected">Not connected</string>
+    <string name="loyverse_status_connected">Connected</string>
+    <string name="loyverse_status_reconnect">Reconnection required</string>
+    <string name="loyverse_description_not_connected">See your Velox sales in your Loyverse POS.</string>
+    <string name="loyverse_description_connected">Your Velox sales are sent to Loyverse.</string>
+    <string name="loyverse_description_reconnect">Loyverse access has expired or was revoked.</string>
+    <string name="loyverse_connect_button">CONNECT LOYVERSE</string>
+    <string name="loyverse_reconnect_button">RECONNECT LOYVERSE</string>
+    <string name="loyverse_disconnect_button">Disconnect</string>
+    <string name="loyverse_disconnect_dialog_title">Disconnect Loyverse?</string>
+    <string name="loyverse_disconnect_dialog_text">Upcoming Velox sales will no longer be sent to your Loyverse POS.</string>
+    <string name="loyverse_disconnect_confirm">Disconnect</string>
 </resources>

@@ -199,4 +199,18 @@
         <item>Ven</item>
         <item>Sam</item>
     </string-array>
+    <!-- Caisse Loyverse -->
+    <string name="profile_section_loyverse">CAISSE LOYVERSE</string>
+    <string name="loyverse_status_not_connected">Non connectée</string>
+    <string name="loyverse_status_connected">Connectée</string>
+    <string name="loyverse_status_reconnect">Reconnexion nécessaire</string>
+    <string name="loyverse_description_not_connected">Retrouvez vos ventes Velox dans votre caisse Loyverse.</string>
+    <string name="loyverse_description_connected">Vos ventes Velox sont envoyées à Loyverse.</string>
+    <string name="loyverse_description_reconnect">L\'accès à Loyverse a expiré ou a été retiré.</string>
+    <string name="loyverse_connect_button">CONNECTER LOYVERSE</string>
+    <string name="loyverse_reconnect_button">RECONNECTER LOYVERSE</string>
+    <string name="loyverse_disconnect_button">Déconnecter</string>
+    <string name="loyverse_disconnect_dialog_title">Déconnecter Loyverse ?</string>
+    <string name="loyverse_disconnect_dialog_text">Les prochaines ventes Velox ne seront plus envoyées à votre caisse Loyverse.</string>
+    <string name="loyverse_disconnect_confirm">Déconnecter</string>
 </resources>

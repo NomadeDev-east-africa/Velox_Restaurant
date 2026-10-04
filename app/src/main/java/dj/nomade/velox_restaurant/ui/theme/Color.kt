@@ -29,3 +29,4 @@ val StatusCancelled = Color(0xFFFF4C4C)
 // ── Étiquettes des options de commande (sauces / suppléments) ──────────────
 val TagSauce        = Color(0xFFFF9800) // orange — sauces
 val TagExtra        = Color(0xFF4FC3F7) // bleu clair — suppléments/extras
+val TagChoice       = Color(0xFFCE93D8) // violet clair — choix inclus (viande, boisson, taille…)

@@ -1,6 +1,7 @@
 package dj.nomade.velox_restaurant.ui.profile
 
 import android.app.Activity
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -29,6 +30,8 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.PointOfSale
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,11 +62,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import dj.nomade.velox_restaurant.R
 import dj.nomade.velox_restaurant.core.locale.AppLocale
+import dj.nomade.velox_restaurant.data.model.LoyverseConnection
+import dj.nomade.velox_restaurant.data.model.LoyverseStatus
 import dj.nomade.velox_restaurant.ui.theme.InterFontFamily
 import dj.nomade.velox_restaurant.ui.theme.ManropeFontFamily
 import dj.nomade.velox_restaurant.ui.theme.NeonGreen
@@ -81,6 +87,19 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showLoyverseDisconnectDialog by remember { mutableStateOf(false) }
+
+    // Rafraîchit l'état Loyverse à chaque retour sur l'écran, notamment au retour
+    // du navigateur après l'autorisation chez Loyverse.
+    LifecycleResumeEffect(Unit) {
+        viewModel.refreshLoyverse()
+        onPauseOrDispose { }
+    }
+    LaunchedEffect(uiState.loyverseAuthUrl) {
+        val url = uiState.loyverseAuthUrl ?: return@LaunchedEffect
+        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+        viewModel.onLoyverseAuthUrlOpened()
+    }
 
     val imagePicker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
@@ -220,6 +239,17 @@ fun ProfileScreen(
 
                     Spacer(Modifier.height(24.dp))
 
+                    // ── Caisse Loyverse ───────────────────────────────────
+                    SectionTitle(stringResource(R.string.profile_section_loyverse))
+                    LoyverseSection(
+                        connection = uiState.loyverse,
+                        busy = uiState.loyverseBusy,
+                        onConnect = viewModel::connectLoyverse,
+                        onDisconnect = { showLoyverseDisconnectDialog = true },
+                    )
+
+                    Spacer(Modifier.height(24.dp))
+
                     // ── Langue ────────────────────────────────────────────
                     SectionTitle(stringResource(R.string.profile_section_language))
                     LanguagePicker()
@@ -257,6 +287,33 @@ fun ProfileScreen(
         }
 
         SnackbarHost(hostState = snackbar, modifier = Modifier.align(Alignment.BottomCenter))
+    }
+
+    if (showLoyverseDisconnectDialog) {
+        AlertDialog(
+            onDismissRequest = { showLoyverseDisconnectDialog = false },
+            containerColor = SurfaceL2,
+            title = {
+                Text(stringResource(R.string.loyverse_disconnect_dialog_title), fontFamily = ManropeFontFamily,
+                    fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            },
+            text = {
+                Text(stringResource(R.string.loyverse_disconnect_dialog_text),
+                    fontFamily = InterFontFamily, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.disconnectLoyverse(); showLoyverseDisconnectDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error),
+                ) { Text(stringResource(R.string.loyverse_disconnect_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLoyverseDisconnectDialog = false }) {
+                    Text(stringResource(R.string.action_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            },
+        )
     }
 
     if (showLogoutDialog) {
@@ -338,6 +395,100 @@ private fun MiniStatCard(
         Spacer(Modifier.height(4.dp))
         Text(value, color = valueColor, fontFamily = ManropeFontFamily,
             fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+    }
+}
+
+/**
+ * Carte de liaison avec la caisse Loyverse : un bouton « Connecter » tant que le
+ * restaurant n'est pas relié, puis le nom du commerce Loyverse et « Déconnecter ».
+ */
+@Composable
+private fun LoyverseSection(
+    connection: LoyverseConnection?,
+    busy: Boolean,
+    onConnect: () -> Unit,
+    onDisconnect: () -> Unit,
+) {
+    val status = connection?.status
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(SurfaceL2, RoundedCornerShape(12.dp))
+            .padding(16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            val warning = status == LoyverseStatus.RECONNECT_REQUIRED
+            val accent = if (warning) MaterialTheme.colorScheme.error else NeonGreen
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(accent.copy(0.12f), RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    if (warning) Icons.Default.Warning else Icons.Default.PointOfSale,
+                    contentDescription = null, tint = accent, modifier = Modifier.size(18.dp),
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    when (status) {
+                        LoyverseStatus.CONNECTED -> stringResource(R.string.loyverse_status_connected)
+                        LoyverseStatus.RECONNECT_REQUIRED -> stringResource(R.string.loyverse_status_reconnect)
+                        else -> stringResource(R.string.loyverse_status_not_connected)
+                    },
+                    color = if (status == LoyverseStatus.CONNECTED) NeonGreen else MaterialTheme.colorScheme.onSurface,
+                    fontFamily = InterFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 14.sp,
+                )
+                Text(
+                    when (status) {
+                        LoyverseStatus.CONNECTED -> connection?.businessName
+                            ?: stringResource(R.string.loyverse_description_connected)
+                        LoyverseStatus.RECONNECT_REQUIRED -> stringResource(R.string.loyverse_description_reconnect)
+                        else -> stringResource(R.string.loyverse_description_not_connected)
+                    },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = InterFontFamily, fontSize = 12.sp,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        when {
+            connection == null -> Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = NeonGreen, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+            }
+            status == LoyverseStatus.CONNECTED -> TextButton(
+                onClick = onDisconnect,
+                enabled = !busy,
+                modifier = Modifier.align(Alignment.End),
+            ) {
+                Text(stringResource(R.string.loyverse_disconnect_button),
+                    color = MaterialTheme.colorScheme.error, fontFamily = ManropeFontFamily,
+                    fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            }
+            else -> Button(
+                onClick = onConnect,
+                enabled = !busy,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = NeonGreen, contentColor = OnNeonGreen),
+            ) {
+                if (busy) {
+                    CircularProgressIndicator(color = OnNeonGreen, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                } else {
+                    Text(
+                        stringResource(
+                            if (status == LoyverseStatus.RECONNECT_REQUIRED) R.string.loyverse_reconnect_button
+                            else R.string.loyverse_connect_button
+                        ),
+                        fontFamily = ManropeFontFamily, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp,
+                    )
+                }
+            }
+        }
     }
 }
 

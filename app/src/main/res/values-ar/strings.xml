@@ -205,4 +205,18 @@
         <item>الجمعة</item>
         <item>السبت</item>
     </string-array>
+    <!-- Loyverse POS -->
+    <string name="profile_section_loyverse">نظام الكاشير Loyverse</string>
+    <string name="loyverse_status_not_connected">غير متصل</string>
+    <string name="loyverse_status_connected">متصل</string>
+    <string name="loyverse_status_reconnect">يلزم إعادة الاتصال</string>
+    <string name="loyverse_description_not_connected">اعرض مبيعات Velox في نظام Loyverse الخاص بك.</string>
+    <string name="loyverse_description_connected">يتم إرسال مبيعات Velox إلى Loyverse.</string>
+    <string name="loyverse_description_reconnect">انتهت صلاحية الوصول إلى Loyverse أو تم سحبه.</string>
+    <string name="loyverse_connect_button">ربط Loyverse</string>
+    <string name="loyverse_reconnect_button">إعادة ربط Loyverse</string>
+    <string name="loyverse_disconnect_button">قطع الاتصال</string>
+    <string name="loyverse_disconnect_dialog_title">قطع الاتصال بـ Loyverse؟</string>
+    <string name="loyverse_disconnect_dialog_text">لن يتم إرسال مبيعات Velox القادمة إلى نظام Loyverse الخاص بك.</string>
+    <string name="loyverse_disconnect_confirm">قطع الاتصال</string>
 </resources>

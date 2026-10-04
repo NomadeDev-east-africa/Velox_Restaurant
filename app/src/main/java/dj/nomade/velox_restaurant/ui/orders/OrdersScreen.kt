@@ -61,6 +61,7 @@ import dj.nomade.velox_restaurant.R
 import dj.nomade.velox_restaurant.data.model.Order
 import dj.nomade.velox_restaurant.data.model.OrderItem
 import dj.nomade.velox_restaurant.data.model.OrderStatus
+import dj.nomade.velox_restaurant.data.model.OptionTagKind
 import dj.nomade.velox_restaurant.ui.components.StatusChip
 import dj.nomade.velox_restaurant.ui.components.TimeAgoText
 import dj.nomade.velox_restaurant.ui.theme.InterFontFamily
@@ -70,6 +71,7 @@ import dj.nomade.velox_restaurant.ui.theme.OnNeonGreen
 import dj.nomade.velox_restaurant.ui.theme.SurfaceL1
 import dj.nomade.velox_restaurant.ui.theme.SurfaceL2
 import dj.nomade.velox_restaurant.ui.theme.SurfaceL3
+import dj.nomade.velox_restaurant.ui.theme.TagChoice
 import dj.nomade.velox_restaurant.ui.theme.TagExtra
 import dj.nomade.velox_restaurant.ui.theme.TagSauce
 import kotlinx.coroutines.delay
@@ -624,17 +626,26 @@ private fun OrderItemsDetail(items: List<OrderItem>) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                if (item.sauces.isNotEmpty() || item.extras.isNotEmpty()) {
+                // Une étiquette par groupe du menu (« VIANDE : Tenders », « BOISSON : Fanta »…) ;
+                // les commandes sans nom de groupe gardent SAUCE / SUPPLÉMENT.
+                val tags = item.optionTags()
+                if (tags.isNotEmpty()) {
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp),
                         modifier = Modifier.padding(start = 4.dp),
                     ) {
-                        if (item.sauces.isNotEmpty()) {
-                            OptionTag(stringResource(R.string.orders_tag_sauce), item.sauces.joinToString(", "), TagSauce)
-                        }
-                        if (item.extras.isNotEmpty()) {
-                            OptionTag(stringResource(R.string.orders_tag_extra), item.extras.joinToString(", "), TagExtra)
+                        tags.forEach { tag ->
+                            val label = tag.label?.uppercase() ?: stringResource(
+                                if (tag.kind == OptionTagKind.SAUCE) R.string.orders_tag_sauce
+                                else R.string.orders_tag_extra
+                            )
+                            val color = when (tag.kind) {
+                                OptionTagKind.SAUCE -> TagSauce
+                                OptionTagKind.EXTRA -> TagExtra
+                                OptionTagKind.CHOICE -> TagChoice
+                            }
+                            OptionTag(label, tag.values.joinToString(", "), color)
                         }
                     }
                 }
