@@ -2,11 +2,9 @@ package dj.nomade.velox_restaurant.ui.promotions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dj.nomade.velox_restaurant.data.model.Category
 import dj.nomade.velox_restaurant.data.model.MenuItem
 import dj.nomade.velox_restaurant.data.model.Promotion
 import dj.nomade.velox_restaurant.domain.repository.AuthRepository
-import dj.nomade.velox_restaurant.domain.repository.CategoryRepository
 import dj.nomade.velox_restaurant.domain.repository.MenuRepository
 import dj.nomade.velox_restaurant.domain.repository.PromotionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +19,6 @@ import javax.inject.Inject
 data class PromotionsUiState(
     val promotions: List<Promotion> = emptyList(),
     val menuItems: List<MenuItem> = emptyList(),
-    val categories: List<Category> = emptyList(),
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val error: String? = null,
@@ -31,7 +28,6 @@ data class PromotionsUiState(
 class PromotionsViewModel @Inject constructor(
     private val promotionRepository: PromotionRepository,
     private val menuRepository: MenuRepository,
-    private val categoryRepository: CategoryRepository,
     private val authRepository: AuthRepository,
 ) : ViewModel() {
 
@@ -53,15 +49,10 @@ class PromotionsViewModel @Inject constructor(
                 .catch { }
                 .collect { items -> _uiState.update { it.copy(menuItems = items) } }
         }
-        viewModelScope.launch {
-            categoryRepository.streamCategories(restaurantId)
-                .catch { }
-                .collect { cats -> _uiState.update { it.copy(categories = cats) } }
-        }
     }
 
+    /** Une promotion cible toujours un plat précis (`type = "item"`). */
     fun addPromotion(
-        type: String,
         targetName: String,
         discountPercent: Int,
         label: String,
@@ -72,7 +63,7 @@ class PromotionsViewModel @Inject constructor(
             runCatching {
                 val promo = Promotion(
                     restaurantId = restaurantId,
-                    type = type,
+                    type = "item",
                     targetId = targetName.lowercase().replace(" ", "_"),
                     targetName = targetName,
                     discountPercent = discountPercent,

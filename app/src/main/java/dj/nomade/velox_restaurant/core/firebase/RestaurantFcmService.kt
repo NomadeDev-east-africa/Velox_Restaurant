@@ -8,7 +8,6 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import dj.nomade.velox_restaurant.MainActivity
 import dj.nomade.velox_restaurant.R
-import dj.nomade.velox_restaurant.RestaurantApplication
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -50,7 +49,7 @@ class RestaurantFcmService : FirebaseMessagingService() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val notification = NotificationCompat.Builder(this, RestaurantApplication.ORDERS_CHANNEL_ID)
+        val notification = NotificationCompat.Builder(this, getString(R.string.default_notification_channel_id))
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(body)

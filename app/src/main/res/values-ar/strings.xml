@@ -1,0 +1,222 @@
+<resources>
+    <string name="app_name">Velox Restaurant</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_orders_name">طلبات جديدة</string>
+    <string name="notification_channel_orders_description">إشعارات بالطلبات الجديدة من العملاء</string>
+
+    <!-- Auth / Login -->
+    <string name="login_title">مركز القيادة</string>
+    <string name="login_subtitle">إدارة المطعم</string>
+    <string name="login_email_label">البريد الإلكتروني</string>
+    <string name="login_password_label">كلمة المرور</string>
+    <string name="login_button">تسجيل الدخول</string>
+    <string name="login_footer">Velox Corp • Restaurant v1.0.1</string>
+    <string name="error_email_password_required">البريد الإلكتروني وكلمة المرور مطلوبان</string>
+    <string name="error_login_generic">خطأ في تسجيل الدخول</string>
+
+    <!-- Home / bottom navigation -->
+    <string name="nav_orders">الطلبات</string>
+    <string name="nav_menu">القائمة</string>
+    <string name="nav_promos">العروض</string>
+    <string name="nav_stats">الإحصائيات</string>
+    <string name="nav_profile">الملف الشخصي</string>
+    <string name="home_offline_banner">غير متصل — يتم عرض البيانات المخزّنة</string>
+
+    <!-- Shared components -->
+    <string name="top_bar_command_center">⬛ مركز القيادة</string>
+    <string name="status_pending">جديدة</string>
+    <string name="status_accepted">مقبولة</string>
+    <string name="status_preparing">قيد التحضير</string>
+    <string name="status_ready">جاهزة</string>
+    <string name="status_delivering">قيد التوصيل</string>
+    <string name="status_completed">مكتملة</string>
+    <string name="status_cancelled">ملغاة</string>
+    <string name="time_ago_now">الآن</string>
+    <string name="time_ago_minutes">منذ %1$d د</string>
+    <string name="time_ago_hours">منذ %1$d س</string>
+
+    <!-- Shared formatting -->
+    <string name="price_fdj">%1$d FDJ</string>
+    <string name="price_plus_fdj">+%1$d FDJ</string>
+    <string name="content_description_change_photo">تغيير الصورة</string>
+
+    <!-- Menu -->
+    <string name="menu_header">القائمة</string>
+    <string name="menu_category_all">الكل</string>
+    <string name="menu_category_sauces">الصلصات</string>
+    <string name="menu_category_supplements">الإضافات</string>
+    <string name="menu_category_legumes">الخضروات</string>
+    <string name="menu_options_hint">متوفرة كخيار إضافي مع أطباق القائمة.</string>
+    <string name="menu_options_empty">لا توجد خيارات في هذا القسم حاليًا.</string>
+    <string name="menu_option_out_of_stock">غير متوفر</string>
+    <string name="menu_option_mixed_state">حالة مختلطة</string>
+    <string name="menu_price_included">مشمول</string>
+    <string name="menu_promo_badge">خصم -%1$d%%</string>
+    <plurals name="menu_option_item_count">
+        <item quantity="zero">لا أطباق</item>
+        <item quantity="one">طبق واحد</item>
+        <item quantity="two">طبقان</item>
+        <item quantity="few">%1$d أطباق</item>
+        <item quantity="many">%1$d طبقًا</item>
+        <item quantity="other">%1$d طبق</item>
+    </plurals>
+
+    <!-- Generic actions -->
+    <string name="action_cancel">إلغاء</string>
+
+    <!-- Orders -->
+    <string name="orders_header_kicker">إدارة العمليات</string>
+    <string name="orders_header_title">إدارة\nالطلبات</string>
+    <string name="orders_system_active">النظام نشط</string>
+    <string name="orders_tab_new">جديدة</string>
+    <string name="orders_tab_active">قيد التنفيذ</string>
+    <string name="orders_empty_new">لا توجد طلبات جديدة</string>
+    <string name="orders_empty_active">لا توجد طلبات قيد التنفيذ</string>
+    <string name="orders_incoming_signal">إشارة واردة</string>
+    <string name="orders_id_format">ORD-%1$s</string>
+    <string name="orders_id_hash_format">#ORD-%1$s</string>
+    <string name="orders_customer">العميل</string>
+    <string name="orders_contact">الاتصال</string>
+    <string name="orders_payload">المحتوى</string>
+    <string name="orders_value">القيمة</string>
+    <string name="orders_delivery_fee_line">+%1$d FDJ توصيل</string>
+    <string name="orders_accept_button">قبول  ›</string>
+    <string name="orders_reject_button">رفض</string>
+    <string name="orders_customer_label">العميل: %1$s</string>
+    <string name="orders_start_prep_button">بدء التحضير</string>
+    <string name="orders_mark_ready_button">جاهز للاستلام  ›</string>
+    <string name="orders_resend_sending">جارٍ الإرسال…</string>
+    <string name="orders_resend_cooldown">إعادة المحاولة خلال %1$d ث</string>
+    <string name="orders_resend_button">إعادة الإرسال إلى السائقين</string>
+    <string name="orders_resend_count">أُعيد الإرسال %1$d مرات</string>
+    <string name="orders_driver_en_route">✓ السائق في الطريق للاستلام</string>
+    <string name="orders_item_quantity">%1$d×</string>
+    <string name="orders_tag_sauce">صلصة</string>
+    <string name="orders_tag_extra">إضافة</string>
+    <string name="orders_cancel_dialog_title">سبب الإلغاء</string>
+    <string name="orders_cancel_dialog_placeholder">مثال: نفاد المخزون…</string>
+    <string name="orders_cancel_dialog_confirm">إلغاء الطلب</string>
+    <string name="orders_cancel_dialog_back">رجوع</string>
+    <string name="error_mark_ready_notification_failed">تم تحديد الطلب كجاهز، لكن فشل إرسال الإشعار. يرجى المحاولة مرة أخرى.</string>
+    <string name="error_resend_failed">فشلت إعادة الإرسال</string>
+    <plurals name="orders_item_count">
+        <item quantity="zero">لا عناصر</item>
+        <item quantity="one">عنصر واحد</item>
+        <item quantity="two">عنصران</item>
+        <item quantity="few">%1$d عناصر</item>
+        <item quantity="many">%1$d عنصرًا</item>
+        <item quantity="other">%1$d عنصر</item>
+    </plurals>
+
+    <!-- Profile -->
+    <string name="profile_status_open">مفتوح</string>
+    <string name="profile_status_closed">مغلق</string>
+    <string name="profile_toggle_open_label">المطعم مفتوح</string>
+    <string name="profile_section_information">المعلومات</string>
+    <string name="profile_label_email">البريد الإلكتروني</string>
+    <string name="profile_label_phone">رقم الهاتف</string>
+    <string name="profile_label_address">العنوان</string>
+    <string name="profile_section_stats">الإحصائيات العامة</string>
+    <string name="profile_stat_total_orders">إجمالي الطلبات</string>
+    <string name="profile_stat_total_revenue">إجمالي الإيرادات</string>
+    <string name="profile_section_language">اللغة</string>
+    <string name="profile_logout_button">تسجيل الخروج</string>
+    <string name="profile_footer_version">Velox Restaurant v1.0.1</string>
+    <string name="profile_placeholder_dash">—</string>
+    <string name="profile_logout_dialog_title">تسجيل الخروج</string>
+    <string name="profile_logout_dialog_text">تأكيد تسجيل الخروج من الجهاز؟</string>
+    <string name="profile_logout_dialog_confirm">تسجيل الخروج</string>
+
+    <!-- Promotions -->
+    <string name="promotions_header">العروض</string>
+    <string name="promotions_active_count">%1$d نشط</string>
+    <string name="promotions_empty_title">لا توجد عروض</string>
+    <string name="promotions_empty_subtitle">اضغط على + لإنشاء عرض</string>
+    <string name="promotions_fab_content_description">إضافة عرض</string>
+    <string name="promotions_delete_dialog_title">حذف العرض</string>
+    <string name="promotions_delete_dialog_text">حذف «%1$s»؟</string>
+    <string name="promotions_delete_dialog_confirm">حذف</string>
+    <string name="promotions_add_title">عرض جديد</string>
+    <string name="promotions_select_item_label">اختر طبقًا</string>
+    <string name="promotions_no_items_available">لا توجد أطباق متاحة</string>
+    <string name="promotions_discount_label">الخصم (%)</string>
+    <string name="promotions_label_field">التسمية المعروضة</string>
+    <string name="promotions_label_placeholder">مثال: عرض نهاية الأسبوع -20%</string>
+    <string name="promotions_expiry_date_label">تاريخ الانتهاء</string>
+    <string name="promotions_expiry_days_label">تنتهي خلال (أيام)</string>
+    <string name="promotions_create_button">إنشاء العرض</string>
+    <string name="promotions_discount_percent">%1$d%%</string>
+    <string name="promotions_expired">منتهي</string>
+    <string name="promotions_until_date">حتى %1$s</string>
+
+    <!-- Stats -->
+    <string name="stats_period_day">يوم</string>
+    <string name="stats_period_week">أسبوع</string>
+    <string name="stats_period_month">شهر</string>
+    <string name="stats_period_year">سنة</string>
+    <string name="stats_monthly_detail_title">التفاصيل الشهرية %1$d</string>
+    <string name="stats_weekly_revenue_title">الإيرادات خلال آخر 7 أيام</string>
+    <string name="stats_top_items_title">أفضل 5 أطباق — هذا الشهر</string>
+    <string name="stats_since_opening_title">منذ الافتتاح</string>
+    <string name="stats_completed_orders_label">الطلبات المكتملة</string>
+    <string name="stats_revenue_label">الإيرادات</string>
+    <string name="stats_avg_rating_label">متوسط التقييم</string>
+    <string name="stats_amount_fdj">%1$s FDJ</string>
+    <string name="stats_hero_completed_orders">الطلبات المكتملة</string>
+    <string name="stats_hero_revenue">الإيرادات</string>
+    <string name="stats_hero_revenue_unit">FDJ — باستثناء التوصيل</string>
+    <string name="stats_mini_avg_basket">متوسط الطلب</string>
+    <string name="stats_mini_cancelled">الملغاة</string>
+    <string name="stats_cancelled_value">%1$d · %2$s%%</string>
+    <string name="stats_table_month">الشهر</string>
+    <string name="stats_table_orders">طلب</string>
+    <string name="stats_table_revenue">الإيرادات (FDJ)</string>
+    <string name="stats_table_cancelled">ملغاة</string>
+    <string name="stats_table_total">الإجمالي</string>
+    <plurals name="stats_sold_count">
+        <item quantity="zero">لم يُباع أي طبق</item>
+        <item quantity="one">طبق واحد مباع</item>
+        <item quantity="two">طبقان مباعان</item>
+        <item quantity="few">%1$d أطباق مباعة</item>
+        <item quantity="many">%1$d طبقًا مباعًا</item>
+        <item quantity="other">%1$d طبق مباع</item>
+    </plurals>
+    <string-array name="stats_months">
+        <item>يناير</item>
+        <item>فبراير</item>
+        <item>مارس</item>
+        <item>أبريل</item>
+        <item>مايو</item>
+        <item>يونيو</item>
+        <item>يوليو</item>
+        <item>أغسطس</item>
+        <item>سبتمبر</item>
+        <item>أكتوبر</item>
+        <item>نوفمبر</item>
+        <item>ديسمبر</item>
+    </string-array>
+    <string-array name="stats_weekdays_short">
+        <item>الأحد</item>
+        <item>الإثنين</item>
+        <item>الثلاثاء</item>
+        <item>الأربعاء</item>
+        <item>الخميس</item>
+        <item>الجمعة</item>
+        <item>السبت</item>
+    </string-array>
+    <!-- Loyverse POS -->
+    <string name="profile_section_loyverse">نظام الكاشير Loyverse</string>
+    <string name="loyverse_status_not_connected">غير متصل</string>
+    <string name="loyverse_status_connected">متصل</string>
+    <string name="loyverse_status_reconnect">يلزم إعادة الاتصال</string>
+    <string name="loyverse_description_not_connected">اعرض مبيعات Velox في نظام Loyverse الخاص بك.</string>
+    <string name="loyverse_description_connected">يتم إرسال مبيعات Velox إلى Loyverse.</string>
+    <string name="loyverse_description_reconnect">انتهت صلاحية الوصول إلى Loyverse أو تم سحبه.</string>
+    <string name="loyverse_connect_button">ربط Loyverse</string>
+    <string name="loyverse_reconnect_button">إعادة ربط Loyverse</string>
+    <string name="loyverse_disconnect_button">قطع الاتصال</string>
+    <string name="loyverse_disconnect_dialog_title">قطع الاتصال بـ Loyverse؟</string>
+    <string name="loyverse_disconnect_dialog_text">لن يتم إرسال مبيعات Velox القادمة إلى نظام Loyverse الخاص بك.</string>
+    <string name="loyverse_disconnect_confirm">قطع الاتصال</string>
+</resources>

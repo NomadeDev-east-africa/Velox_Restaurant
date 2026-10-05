@@ -3,9 +3,11 @@ package dj.nomade.velox_restaurant.data.remote
 import dj.nomade.velox_restaurant.data.model.MenuItem
 import dj.nomade.velox_restaurant.data.model.Order
 import dj.nomade.velox_restaurant.data.model.OrderItem
+import dj.nomade.velox_restaurant.data.model.OrderItemOption
 import dj.nomade.velox_restaurant.data.model.OrderStatus
 import dj.nomade.velox_restaurant.data.model.Promotion
 import dj.nomade.velox_restaurant.data.model.Restaurant
+import dj.nomade.velox_restaurant.data.model.parseOptionGroups
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.GeoPoint
@@ -44,6 +46,11 @@ fun DocumentSnapshot.toOrder(): Order {
         customerName = getString("customerName") ?: "",
         customerPhone = getString("customerPhone") ?: "",
         items = items,
+        // Les commandes anciennes n'ont pas de `subtotal` : on le reconstitue
+        // depuis total - deliveryFee pour ne pas fausser l'historique comptable.
+        subtotal = getDouble("subtotal")
+            ?: ((getDouble("total") ?: 0.0) - (getDouble("deliveryFee") ?: 0.0)),
+        discount = getDouble("discount") ?: 0.0,
         deliveryFee = getDouble("deliveryFee") ?: 0.0,
         total = getDouble("total") ?: 0.0,
         status = OrderStatus.fromString(getString("status") ?: ""),
@@ -63,6 +70,8 @@ fun DocumentSnapshot.toOrder(): Order {
         cancellationReason = getString("cancellationReason"),
         createdAt = getTimestamp("createdAt")?.toEpochMillis(),
         updatedAt = getTimestamp("updatedAt")?.toEpochMillis(),
+        lastResendAt = getTimestamp("lastResendAt")?.toEpochMillis(),
+        resendCount = getLong("resendCount")?.toInt() ?: 0,
     )
 }
 
@@ -76,6 +85,7 @@ fun DocumentSnapshot.toMenuItem(): MenuItem = MenuItem(
     category = getString("category") ?: "",
     isAvailable = getBoolean("isAvailable") ?: true,
     preparationTime = getLong("preparationTime")?.toInt() ?: 15,
+    optionGroups = parseOptionGroups(get("optionGroups")),
     createdAt = getTimestamp("createdAt")?.toEpochMillis(),
     updatedAt = getTimestamp("updatedAt")?.toEpochMillis(),
 )
@@ -98,16 +108,26 @@ fun DocumentSnapshot.toPromotion(): Promotion = Promotion(
 private fun Any?.toOrderItem(): OrderItem? {
     val map = this as? Map<String, Any> ?: return null
 
-    fun extractStringList(key: String): List<String> {
+    // Chaque option est soit une simple chaîne (anciennes commandes), soit une map
+    // `{name, price, isSelected, group?, choiceId?}` écrite par l'app client.
+    fun extractOptions(key: String, isSauce: Boolean): List<OrderItemOption> {
         val raw = map[key] as? List<*> ?: return emptyList()
         return raw.mapNotNull { entry ->
             when (entry) {
-                is String -> entry
-                is Map<*, *> -> entry["name"] as? String
+                is String -> OrderItemOption(entry, group = null, isSauce = isSauce)
+                is Map<*, *> -> {
+                    // Un choix explicitement non sélectionné n'a pas été commandé.
+                    if (entry["isSelected"] == false) return@mapNotNull null
+                    val name = entry["name"] as? String ?: return@mapNotNull null
+                    OrderItemOption(name, group = entry["group"] as? String, isSauce = isSauce)
+                }
                 else -> null
             }
         }
     }
+
+    val sauces = extractOptions("sauces", isSauce = true)
+    val extras = extractOptions("extras", isSauce = false)
 
     return OrderItem(
         name = map["name"] as? String ?: return null,
@@ -116,8 +136,9 @@ private fun Any?.toOrderItem(): OrderItem? {
         imageUrl = map["imageUrl"] as? String ?: "",
         category = map["category"] as? String ?: "",
         preparationTime = (map["preparationTime"] as? Long)?.toInt() ?: 0,
-        sauces = extractStringList("sauces"),
-        extras = extractStringList("extras"),
+        sauces = sauces.map { it.name },
+        extras = extras.map { it.name },
+        options = sauces + extras,
     )
 }
 

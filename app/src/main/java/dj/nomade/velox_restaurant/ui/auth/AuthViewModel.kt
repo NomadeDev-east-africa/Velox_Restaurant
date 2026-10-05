@@ -1,7 +1,10 @@
 package dj.nomade.velox_restaurant.ui.auth
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dj.nomade.velox_restaurant.R
 import dj.nomade.velox_restaurant.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +25,7 @@ data class LoginUiState(
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -33,7 +37,7 @@ class AuthViewModel @Inject constructor(
     fun login() {
         val state = _uiState.value
         if (state.email.isBlank() || state.password.isBlank()) {
-            _uiState.update { it.copy(error = "Email et mot de passe requis") }
+            _uiState.update { it.copy(error = context.getString(R.string.error_email_password_required)) }
             return
         }
         viewModelScope.launch {
@@ -44,7 +48,7 @@ class AuthViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = e.message ?: "Erreur de connexion",
+                            error = e.message ?: context.getString(R.string.error_login_generic),
                         )
                     }
                 }

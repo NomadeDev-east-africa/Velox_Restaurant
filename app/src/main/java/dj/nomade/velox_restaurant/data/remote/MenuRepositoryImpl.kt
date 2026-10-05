@@ -9,6 +9,8 @@ import dj.nomade.velox_restaurant.data.local.dao.MenuItemDao
 import dj.nomade.velox_restaurant.data.local.entity.toDomain
 import dj.nomade.velox_restaurant.data.local.entity.toEntity
 import dj.nomade.velox_restaurant.data.model.MenuItem
+import dj.nomade.velox_restaurant.data.model.normalizeOptionName
+import dj.nomade.velox_restaurant.data.model.toFirestoreList
 import dj.nomade.velox_restaurant.domain.repository.MenuRepository
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -81,6 +83,63 @@ class MenuRepositoryImpl @Inject constructor(
                 )
             ).await()
         }
+    }
+
+    override suspend fun updateItemImage(itemId: String, imageUrl: String) {
+        withRetry {
+            collection.document(itemId).update(
+                mapOf(
+                    "imageUrl" to imageUrl,
+                    "updatedAt" to FieldValue.serverTimestamp(),
+                )
+            ).await()
+        }
+    }
+
+    override suspend fun setChoiceAvailability(
+        restaurantId: String,
+        choiceName: String,
+        available: Boolean,
+    ): Int {
+        val target = choiceName.normalizeOptionName()
+
+        // On lit les plats du restaurant, on ne garde que ceux qui portent réellement
+        // ce choix, et on reconstruit leur `optionGroups` complet avec le flag modifié.
+        val snapshot = collection.whereEqualTo("restaurantId", restaurantId).get().await()
+        val edits = snapshot.documents.mapNotNull { doc ->
+            val item = runCatching { doc.toMenuItem() }.getOrNull() ?: return@mapNotNull null
+            val carriesChoice = item.optionGroups.any { group ->
+                group.choices.any { it.name.normalizeOptionName() == target }
+            }
+            if (!carriesChoice) return@mapNotNull null
+
+            val updated = item.optionGroups.map { group ->
+                group.copy(choices = group.choices.map { choice ->
+                    if (choice.name.normalizeOptionName() == target) {
+                        choice.copy(available = available)
+                    } else choice
+                })
+            }
+            doc.id to updated
+        }
+
+        // Un WriteBatch est plafonné à 500 opérations : on découpe par sécurité.
+        edits.chunked(400).forEach { chunk ->
+            withRetry {
+                val batch = firestore.batch()
+                chunk.forEach { (id, groups) ->
+                    batch.update(
+                        collection.document(id),
+                        mapOf(
+                            "optionGroups" to groups.toFirestoreList(),
+                            "updatedAt" to FieldValue.serverTimestamp(),
+                        ),
+                    )
+                }
+                batch.commit().await()
+            }
+        }
+        return edits.size
     }
 
     override suspend fun uploadMenuImage(restaurantId: String, itemId: String, imageUri: Uri): String {

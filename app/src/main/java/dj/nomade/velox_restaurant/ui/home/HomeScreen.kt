@@ -52,10 +52,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.annotation.StringRes
+import dj.nomade.velox_restaurant.R
 import dj.nomade.velox_restaurant.core.utils.rememberNetworkState
 import dj.nomade.velox_restaurant.ui.menu.MenuScreen
 import dj.nomade.velox_restaurant.ui.orders.OrdersScreen
@@ -81,17 +84,17 @@ private fun TabContent(visible: Boolean, content: @Composable () -> Unit) {
 }
 
 private data class NavItem(
-    val label: String,
+    @StringRes val labelRes: Int,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
 )
 
 private val navItems = listOf(
-    NavItem("ORDERS",   Icons.Filled.Receipt,     Icons.Outlined.Receipt),
-    NavItem("MENU",     Icons.Filled.Restaurant,  Icons.Outlined.Restaurant),
-    NavItem("PROMOS",   Icons.Filled.LocalOffer,  Icons.Outlined.LocalOffer),
-    NavItem("STATS",    Icons.Filled.BarChart,    Icons.Outlined.BarChart),
-    NavItem("PROFILE",  Icons.Filled.Person,      Icons.Outlined.Person),
+    NavItem(R.string.nav_orders,  Icons.Filled.Receipt,     Icons.Outlined.Receipt),
+    NavItem(R.string.nav_menu,    Icons.Filled.Restaurant,  Icons.Outlined.Restaurant),
+    NavItem(R.string.nav_promos,  Icons.Filled.LocalOffer,  Icons.Outlined.LocalOffer),
+    NavItem(R.string.nav_stats,   Icons.Filled.BarChart,    Icons.Outlined.BarChart),
+    NavItem(R.string.nav_profile, Icons.Filled.Person,      Icons.Outlined.Person),
 )
 
 @Composable
@@ -134,7 +137,7 @@ fun HomeScreen(onLogout: () -> Unit) {
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "Hors ligne — données en cache",
+                    text = stringResource(R.string.home_offline_banner),
                     color = Color.White,
                     fontSize = 12.sp,
                     fontFamily = InterFontFamily,
@@ -164,6 +167,7 @@ fun HomeScreen(onLogout: () -> Unit) {
         ) {
             navItems.forEachIndexed { index, item ->
                 val selected = selectedTab == index
+                val label = stringResource(item.labelRes)
                 NavigationBarItem(
                     selected = selected,
                     onClick = { selectedTab = index },
@@ -198,7 +202,7 @@ fun HomeScreen(onLogout: () -> Unit) {
                             ) {
                                 Icon(
                                     imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
-                                    contentDescription = item.label,
+                                    contentDescription = label,
                                     tint = if (selected) NeonGreen else MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(22.dp),
                                 )
@@ -207,7 +211,7 @@ fun HomeScreen(onLogout: () -> Unit) {
                     },
                     label = {
                         Text(
-                            text = item.label,
+                            text = label,
                             fontFamily = InterFontFamily,
                             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                             fontSize = 9.sp,

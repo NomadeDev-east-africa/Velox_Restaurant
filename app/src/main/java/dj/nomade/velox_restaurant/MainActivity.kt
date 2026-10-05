@@ -1,13 +1,17 @@
 package dj.nomade.velox_restaurant
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import dj.nomade.velox_restaurant.core.locale.AppLocale
 import dj.nomade.velox_restaurant.domain.repository.AuthRepository
 import dj.nomade.velox_restaurant.navigation.AppNavHost
 import dj.nomade.velox_restaurant.ui.theme.NomadeRestaurantTheme
@@ -23,9 +27,17 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { /* l'utilisateur a répondu — le système gère l'état */ }
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocale.wrapContext(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // Theme Onyx toujours sombre : icones claires forcees sur les deux barres.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+        )
         requestNotificationsPermissionIfNeeded()
         setContent {
             NomadeRestaurantTheme {

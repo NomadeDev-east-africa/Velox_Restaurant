@@ -13,6 +13,8 @@ data class MenuItem(
     val category: String = "",
     val isAvailable: Boolean = true,
     val preparationTime: Int = 15,
+    /** Sauces, suppléments, tailles… — cf. [OptionGroup]. Jamais réécrit par l'app resto. */
+    val optionGroups: List<OptionGroup> = emptyList(),
     val createdAt: Long? = null,
     val updatedAt: Long? = null,
 )

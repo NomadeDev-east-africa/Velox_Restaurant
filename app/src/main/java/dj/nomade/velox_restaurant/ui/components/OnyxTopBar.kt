@@ -15,12 +15,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import dj.nomade.velox_restaurant.R
 import dj.nomade.velox_restaurant.ui.theme.ManropeFontFamily
 import dj.nomade.velox_restaurant.ui.theme.NeonGreen
 import dj.nomade.velox_restaurant.ui.theme.SurfaceL2
@@ -40,7 +42,7 @@ fun OnyxTopBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "⬛ COMMAND CENTER",
+            text = stringResource(R.string.top_bar_command_center),
             color = NeonGreen,
             fontFamily = ManropeFontFamily,
             fontWeight = FontWeight.ExtraBold,

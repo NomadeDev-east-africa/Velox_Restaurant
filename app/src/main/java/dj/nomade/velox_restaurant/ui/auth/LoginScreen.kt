@@ -47,6 +47,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -97,7 +98,7 @@ fun LoginScreen(
             // ── Logo ────────────────────────────────────────────────────
             AsyncImage(
                 model = R.drawable.logo_restaurant,
-                contentDescription = "Nomade253 Restaurant",
+                contentDescription = stringResource(R.string.app_name),
                 modifier = Modifier.size(120.dp),
             )
 
@@ -105,14 +106,14 @@ fun LoginScreen(
 
             // ── Titre ────────────────────────────────────────────────────
             Text(
-                text = "COMMAND CENTER",
+                text = stringResource(R.string.login_title),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     color = NeonGreen,
                     letterSpacing = 3.sp,
                 ),
             )
             Text(
-                text = "Restaurant Manager",
+                text = stringResource(R.string.login_subtitle),
                 style = MaterialTheme.typography.labelLarge.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 1.5.sp,
@@ -126,7 +127,7 @@ fun LoginScreen(
             OnyxTextField(
                 value = uiState.email,
                 onValueChange = viewModel::onEmailChange,
-                label = "EMAIL",
+                label = stringResource(R.string.login_email_label),
                 leadingIcon = {
                     Icon(Icons.Default.Mail, contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -146,7 +147,7 @@ fun LoginScreen(
             OnyxTextField(
                 value = uiState.password,
                 onValueChange = viewModel::onPasswordChange,
-                label = "MOT DE PASSE",
+                label = stringResource(R.string.login_password_label),
                 leadingIcon = {
                     Icon(Icons.Default.Lock, contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -216,7 +217,7 @@ fun LoginScreen(
                     )
                 } else {
                     Text(
-                        text = "SE CONNECTER",
+                        text = stringResource(R.string.login_button),
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = 2.sp,
@@ -228,7 +229,7 @@ fun LoginScreen(
             Spacer(Modifier.height(48.dp))
 
             Text(
-                text = "Nomade253 • Restaurant v1.0",
+                text = stringResource(R.string.login_footer),
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                 ),

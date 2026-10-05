@@ -31,8 +31,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -54,13 +52,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dj.nomade.velox_restaurant.data.model.Category
+import dj.nomade.velox_restaurant.R
 import dj.nomade.velox_restaurant.data.model.MenuItem
 import dj.nomade.velox_restaurant.data.model.Promotion
 import dj.nomade.velox_restaurant.ui.theme.InterFontFamily
@@ -95,7 +94,7 @@ fun PromotionsScreen(viewModel: PromotionsViewModel = hiltViewModel()) {
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    "PROMOTIONS",
+                    stringResource(R.string.promotions_header),
                     fontFamily = ManropeFontFamily,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 20.sp,
@@ -105,7 +104,7 @@ fun PromotionsScreen(viewModel: PromotionsViewModel = hiltViewModel()) {
                 val activeCount = state.promotions.count { it.isActive && !it.isExpired }
                 if (activeCount > 0) {
                     Text(
-                        "$activeCount ACTIVES",
+                        stringResource(R.string.promotions_active_count, activeCount),
                         fontFamily = InterFontFamily,
                         fontSize = 11.sp,
                         color = NeonGreen,
@@ -135,14 +134,14 @@ fun PromotionsScreen(viewModel: PromotionsViewModel = hiltViewModel()) {
                         )
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            "Aucune promotion",
+                            stringResource(R.string.promotions_empty_title),
                             fontFamily = InterFontFamily,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.5f),
                             fontSize = 15.sp,
                         )
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            "Appuyez sur + pour en créer une",
+                            stringResource(R.string.promotions_empty_subtitle),
                             fontFamily = InterFontFamily,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.35f),
                             fontSize = 12.sp,
@@ -175,7 +174,7 @@ fun PromotionsScreen(viewModel: PromotionsViewModel = hiltViewModel()) {
             containerColor = NeonGreen,
             contentColor = OnNeonGreen,
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Ajouter une promotion")
+            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.promotions_fab_content_description))
         }
 
         SnackbarHost(hostState = snackbar, modifier = Modifier.align(Alignment.BottomCenter))
@@ -185,10 +184,9 @@ fun PromotionsScreen(viewModel: PromotionsViewModel = hiltViewModel()) {
         AddPromotionSheet(
             isSaving = state.isSaving,
             menuItems = state.menuItems,
-            categories = state.categories,
             onDismiss = { showAddSheet = false },
-            onSave = { type, targetName, discount, label, endDate ->
-                viewModel.addPromotion(type, targetName, discount, label, endDate)
+            onSave = { targetName, discount, label, endDate ->
+                viewModel.addPromotion(targetName, discount, label, endDate)
                 showAddSheet = false
             },
         )
@@ -200,7 +198,7 @@ fun PromotionsScreen(viewModel: PromotionsViewModel = hiltViewModel()) {
             containerColor = SurfaceL2,
             title = {
                 Text(
-                    "Supprimer la promotion",
+                    stringResource(R.string.promotions_delete_dialog_title),
                     fontFamily = ManropeFontFamily,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -208,7 +206,7 @@ fun PromotionsScreen(viewModel: PromotionsViewModel = hiltViewModel()) {
             },
             text = {
                 Text(
-                    "Supprimer « ${promo.label} » ?",
+                    stringResource(R.string.promotions_delete_dialog_text, promo.label),
                     fontFamily = InterFontFamily,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -217,11 +215,11 @@ fun PromotionsScreen(viewModel: PromotionsViewModel = hiltViewModel()) {
                 Button(
                     onClick = { viewModel.deletePromotion(promo.id); deleteTarget = null },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                ) { Text("Supprimer") }
+                ) { Text(stringResource(R.string.promotions_delete_dialog_confirm)) }
             },
             dismissButton = {
                 TextButton(onClick = { deleteTarget = null }) {
-                    Text("Annuler", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.action_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
         )
@@ -233,11 +231,9 @@ fun PromotionsScreen(viewModel: PromotionsViewModel = hiltViewModel()) {
 private fun AddPromotionSheet(
     isSaving: Boolean,
     menuItems: List<MenuItem>,
-    categories: List<Category>,
     onDismiss: () -> Unit,
-    onSave: (type: String, targetName: String, discount: Int, label: String, endDate: Long?) -> Unit,
+    onSave: (targetName: String, discount: Int, label: String, endDate: Long?) -> Unit,
 ) {
-    var type by remember { mutableStateOf("item") }
     var targetName by remember { mutableStateOf("") }
     var dropdownExpanded by remember { mutableStateOf(false) }
     var discount by remember { mutableStateOf("") }
@@ -245,12 +241,10 @@ private fun AddPromotionSheet(
     var hasEndDate by remember { mutableStateOf(false) }
     var endDays by remember { mutableStateOf("7") }
 
-    LaunchedEffect(type) {
-        targetName = ""
-        dropdownExpanded = false
-    }
-
-    val options = if (type == "item") menuItems.map { it.name } else categories.map { it.name }
+    // Une promotion cible toujours un plat précis. Le ciblage par catégorie a été
+    // retiré : il reposait sur un nom de catégorie libre, et les promos ainsi
+    // créées ne correspondaient à aucun plat réel du restaurant.
+    val options = menuItems.map { it.name }
 
     val discountInt = discount.toIntOrNull()
     val isValid = targetName.isNotBlank()
@@ -269,30 +263,13 @@ private fun AddPromotionSheet(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
-                "NOUVELLE PROMOTION",
+                stringResource(R.string.promotions_add_title),
                 fontFamily = ManropeFontFamily,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 16.sp,
                 letterSpacing = 1.5.sp,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("item" to "PLAT", "category" to "CATÉGORIE").forEach { (value, chipLabel) ->
-                    FilterChip(
-                        selected = type == value,
-                        onClick = { type = value },
-                        label = {
-                            Text(chipLabel, fontFamily = InterFontFamily, fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold)
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = NeonGreen.copy(alpha = 0.2f),
-                            selectedLabelColor = NeonGreen,
-                        ),
-                    )
-                }
-            }
 
             ExposedDropdownMenuBox(
                 expanded = dropdownExpanded,
@@ -302,7 +279,7 @@ private fun AddPromotionSheet(
                     value = targetName,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text(if (type == "item") "Sélectionner un plat" else "Sélectionner une catégorie") },
+                    label = { Text(stringResource(R.string.promotions_select_item_label)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
                     modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
                     colors = sheetFieldColors(),
@@ -317,7 +294,7 @@ private fun AddPromotionSheet(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    if (type == "item") "Aucun plat disponible" else "Aucune catégorie disponible",
+                                    stringResource(R.string.promotions_no_items_available),
                                     fontFamily = InterFontFamily,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -344,7 +321,7 @@ private fun AddPromotionSheet(
             OutlinedTextField(
                 value = discount,
                 onValueChange = { discount = it.filter { c -> c.isDigit() } },
-                label = { Text("Remise (%)") },
+                label = { Text(stringResource(R.string.promotions_discount_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 colors = sheetFieldColors(),
@@ -358,10 +335,10 @@ private fun AddPromotionSheet(
             OutlinedTextField(
                 value = label,
                 onValueChange = { label = it },
-                label = { Text("Libellé affiché") },
+                label = { Text(stringResource(R.string.promotions_label_field)) },
                 placeholder = {
                     Text(
-                        "ex: Promo weekend -20%",
+                        stringResource(R.string.promotions_label_placeholder),
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.5f),
                     )
@@ -377,7 +354,7 @@ private fun AddPromotionSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    "Date d'expiration",
+                    stringResource(R.string.promotions_expiry_date_label),
                     fontFamily = InterFontFamily,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -397,7 +374,7 @@ private fun AddPromotionSheet(
                 OutlinedTextField(
                     value = endDays,
                     onValueChange = { endDays = it.filter { c -> c.isDigit() } },
-                    label = { Text("Expire dans (jours)") },
+                    label = { Text(stringResource(R.string.promotions_expiry_days_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = sheetFieldColors(),
@@ -411,7 +388,7 @@ private fun AddPromotionSheet(
                         val days = endDays.toLongOrNull() ?: 7L
                         System.currentTimeMillis() + days * 24 * 60 * 60 * 1000L
                     } else null
-                    onSave(type, targetName, discountInt!!, label, endDate)
+                    onSave(targetName, discountInt!!, label, endDate)
                 },
                 enabled = isValid && !isSaving,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
@@ -429,7 +406,7 @@ private fun AddPromotionSheet(
                     )
                 } else {
                     Text(
-                        "CRÉER LA PROMOTION",
+                        stringResource(R.string.promotions_create_button),
                         fontFamily = ManropeFontFamily,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 13.sp,
@@ -468,7 +445,7 @@ private fun PromotionCard(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                "${promotion.discountPercent}%",
+                stringResource(R.string.promotions_discount_percent, promotion.discountPercent),
                 fontFamily = ManropeFontFamily,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 13.sp,
@@ -496,8 +473,8 @@ private fun PromotionCard(
                 promotion.endDate?.let { end ->
                     Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                     Text(
-                        if (promotion.isExpired) "EXPIRÉ"
-                        else "jusqu'au ${dateFormat.format(Date(end))}",
+                        if (promotion.isExpired) stringResource(R.string.promotions_expired)
+                        else stringResource(R.string.promotions_until_date, dateFormat.format(Date(end))),
                         fontSize = 11.sp,
                         fontFamily = InterFontFamily,
                         color = if (promotion.isExpired) MaterialTheme.colorScheme.error

@@ -1,0 +1,210 @@
+<resources>
+    <string name="app_name">Velox Restaurant</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_orders_name">New orders</string>
+    <string name="notification_channel_orders_description">Notifications for new customer orders</string>
+
+    <!-- Auth / Login -->
+    <string name="login_title">COMMAND CENTER</string>
+    <string name="login_subtitle">Restaurant Manager</string>
+    <string name="login_email_label">EMAIL</string>
+    <string name="login_password_label">PASSWORD</string>
+    <string name="login_button">SIGN IN</string>
+    <string name="login_footer">Velox Corp • Restaurant v1.0.1</string>
+    <string name="error_email_password_required">Email and password required</string>
+    <string name="error_login_generic">Login error</string>
+
+    <!-- Home / bottom navigation -->
+    <string name="nav_orders">ORDERS</string>
+    <string name="nav_menu">MENU</string>
+    <string name="nav_promos">PROMOS</string>
+    <string name="nav_stats">STATS</string>
+    <string name="nav_profile">PROFILE</string>
+    <string name="home_offline_banner">Offline — showing cached data</string>
+
+    <!-- Shared components -->
+    <string name="top_bar_command_center">⬛ COMMAND CENTER</string>
+    <string name="status_pending">NEW</string>
+    <string name="status_accepted">ACCEPTED</string>
+    <string name="status_preparing">IN KITCHEN</string>
+    <string name="status_ready">READY</string>
+    <string name="status_delivering">DELIVERING</string>
+    <string name="status_completed">COMPLETED</string>
+    <string name="status_cancelled">CANCELLED</string>
+    <string name="time_ago_now">NOW</string>
+    <string name="time_ago_minutes">%1$dM AGO</string>
+    <string name="time_ago_hours">%1$dH AGO</string>
+
+    <!-- Shared formatting -->
+    <string name="price_fdj">%1$d FDJ</string>
+    <string name="price_plus_fdj">+%1$d FDJ</string>
+    <string name="content_description_change_photo">Change photo</string>
+
+    <!-- Menu -->
+    <string name="menu_header">MENU</string>
+    <string name="menu_category_all">All</string>
+    <string name="menu_category_sauces">Sauces</string>
+    <string name="menu_category_supplements">Extras</string>
+    <string name="menu_category_legumes">Vegetables</string>
+    <string name="menu_options_hint">Offered as an option on menu items.</string>
+    <string name="menu_options_empty">No options in this section yet.</string>
+    <string name="menu_option_out_of_stock">OUT OF STOCK</string>
+    <string name="menu_option_mixed_state">MIXED STATUS</string>
+    <string name="menu_price_included">Included</string>
+    <string name="menu_promo_badge">PROMO -%1$d%%</string>
+    <plurals name="menu_option_item_count">
+        <item quantity="one">%1$d DISH</item>
+        <item quantity="other">%1$d DISHES</item>
+    </plurals>
+
+    <!-- Generic actions -->
+    <string name="action_cancel">Cancel</string>
+
+    <!-- Orders -->
+    <string name="orders_header_kicker">OPERATION MANAGEMENT</string>
+    <string name="orders_header_title">ORDER\nMANAGEMENT</string>
+    <string name="orders_system_active">SYSTEM ACTIVE</string>
+    <string name="orders_tab_new">NEW</string>
+    <string name="orders_tab_active">ACTIVE</string>
+    <string name="orders_empty_new">No new orders</string>
+    <string name="orders_empty_active">No active orders</string>
+    <string name="orders_incoming_signal">INCOMING SIGNAL</string>
+    <string name="orders_id_format">ORD-%1$s</string>
+    <string name="orders_id_hash_format">#ORD-%1$s</string>
+    <string name="orders_customer">CUSTOMER</string>
+    <string name="orders_contact">CONTACT</string>
+    <string name="orders_payload">PAYLOAD</string>
+    <string name="orders_value">VALUE</string>
+    <string name="orders_delivery_fee_line">+%1$d FDJ delivery</string>
+    <string name="orders_accept_button">ACCEPT  ›</string>
+    <string name="orders_reject_button">Decline</string>
+    <string name="orders_customer_label">Customer: %1$s</string>
+    <string name="orders_start_prep_button">START PREPARATION</string>
+    <string name="orders_mark_ready_button">READY FOR PICKUP  ›</string>
+    <string name="orders_resend_sending">SENDING…</string>
+    <string name="orders_resend_cooldown">RETRY IN %1$ds</string>
+    <string name="orders_resend_button">RESEND TO DRIVERS</string>
+    <string name="orders_resend_count">Resent %1$d times</string>
+    <string name="orders_driver_en_route">✓ DRIVER EN ROUTE FOR PICKUP</string>
+    <string name="orders_item_quantity">%1$d×</string>
+    <string name="orders_tag_sauce">SAUCE</string>
+    <string name="orders_tag_extra">EXTRA</string>
+    <string name="orders_cancel_dialog_title">Cancellation reason</string>
+    <string name="orders_cancel_dialog_placeholder">E.g.: Out of stock…</string>
+    <string name="orders_cancel_dialog_confirm">Cancel order</string>
+    <string name="orders_cancel_dialog_back">Back</string>
+    <string name="error_mark_ready_notification_failed">Order marked ready, but the notification failed to send. Please retry.</string>
+    <string name="error_resend_failed">Resend failed</string>
+    <plurals name="orders_item_count">
+        <item quantity="one">%1$d Item</item>
+        <item quantity="other">%1$d Items</item>
+    </plurals>
+
+    <!-- Profile -->
+    <string name="profile_status_open">OPEN</string>
+    <string name="profile_status_closed">CLOSED</string>
+    <string name="profile_toggle_open_label">Restaurant open</string>
+    <string name="profile_section_information">INFORMATION</string>
+    <string name="profile_label_email">EMAIL CONTACT</string>
+    <string name="profile_label_phone">PHONE LINE</string>
+    <string name="profile_label_address">HEADQUARTERS</string>
+    <string name="profile_section_stats">GLOBAL STATISTICS</string>
+    <string name="profile_stat_total_orders">Total Orders</string>
+    <string name="profile_stat_total_revenue">Total Revenue</string>
+    <string name="profile_section_language">LANGUAGE</string>
+    <string name="profile_logout_button">LOGOUT TERMINAL</string>
+    <string name="profile_footer_version">Velox Restaurant v1.0.1</string>
+    <string name="profile_placeholder_dash">—</string>
+    <string name="profile_logout_dialog_title">Log out</string>
+    <string name="profile_logout_dialog_text">Confirm terminal logout?</string>
+    <string name="profile_logout_dialog_confirm">Log out</string>
+
+    <!-- Promotions -->
+    <string name="promotions_header">PROMOTIONS</string>
+    <string name="promotions_active_count">%1$d ACTIVE</string>
+    <string name="promotions_empty_title">No promotions</string>
+    <string name="promotions_empty_subtitle">Tap + to create one</string>
+    <string name="promotions_fab_content_description">Add a promotion</string>
+    <string name="promotions_delete_dialog_title">Delete promotion</string>
+    <string name="promotions_delete_dialog_text">Delete \"%1$s\"?</string>
+    <string name="promotions_delete_dialog_confirm">Delete</string>
+    <string name="promotions_add_title">NEW PROMOTION</string>
+    <string name="promotions_select_item_label">Select a dish</string>
+    <string name="promotions_no_items_available">No dishes available</string>
+    <string name="promotions_discount_label">Discount (%)</string>
+    <string name="promotions_label_field">Display label</string>
+    <string name="promotions_label_placeholder">e.g.: Weekend deal -20%</string>
+    <string name="promotions_expiry_date_label">Expiry date</string>
+    <string name="promotions_expiry_days_label">Expires in (days)</string>
+    <string name="promotions_create_button">CREATE PROMOTION</string>
+    <string name="promotions_discount_percent">%1$d%%</string>
+    <string name="promotions_expired">EXPIRED</string>
+    <string name="promotions_until_date">until %1$s</string>
+
+    <!-- Stats -->
+    <string name="stats_period_day">Day</string>
+    <string name="stats_period_week">Week</string>
+    <string name="stats_period_month">Month</string>
+    <string name="stats_period_year">Year</string>
+    <string name="stats_monthly_detail_title">MONTHLY DETAIL %1$d</string>
+    <string name="stats_weekly_revenue_title">REVENUE — LAST 7 DAYS</string>
+    <string name="stats_top_items_title">TOP 5 DISHES — THIS MONTH</string>
+    <string name="stats_since_opening_title">SINCE OPENING</string>
+    <string name="stats_completed_orders_label">Completed orders</string>
+    <string name="stats_revenue_label">Revenue</string>
+    <string name="stats_avg_rating_label">Average rating</string>
+    <string name="stats_amount_fdj">%1$s FDJ</string>
+    <string name="stats_hero_completed_orders">COMPLETED ORDERS</string>
+    <string name="stats_hero_revenue">REVENUE</string>
+    <string name="stats_hero_revenue_unit">FDJ — excluding delivery</string>
+    <string name="stats_mini_avg_basket">AVG. BASKET</string>
+    <string name="stats_mini_cancelled">CANCELLED</string>
+    <string name="stats_cancelled_value">%1$d · %2$s%%</string>
+    <string name="stats_table_month">MONTH</string>
+    <string name="stats_table_orders">ORD</string>
+    <string name="stats_table_revenue">REV (FDJ)</string>
+    <string name="stats_table_cancelled">CANC.</string>
+    <string name="stats_table_total">TOTAL</string>
+    <plurals name="stats_sold_count">
+        <item quantity="one">%1$d SOLD</item>
+        <item quantity="other">%1$d SOLD</item>
+    </plurals>
+    <string-array name="stats_months">
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
+    </string-array>
+    <string-array name="stats_weekdays_short">
+        <item>Sun</item>
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+        <item>Sat</item>
+    </string-array>
+    <!-- Loyverse POS -->
+    <string name="profile_section_loyverse">LOYVERSE POS</string>
+    <string name="loyverse_status_not_connected">Not connected</string>
+    <string name="loyverse_status_connected">Connected</string>
+    <string name="loyverse_status_reconnect">Reconnection required</string>
+    <string name="loyverse_description_not_connected">See your Velox sales in your Loyverse POS.</string>
+    <string name="loyverse_description_connected">Your Velox sales are sent to Loyverse.</string>
+    <string name="loyverse_description_reconnect">Loyverse access has expired or was revoked.</string>
+    <string name="loyverse_connect_button">CONNECT LOYVERSE</string>
+    <string name="loyverse_reconnect_button">RECONNECT LOYVERSE</string>
+    <string name="loyverse_disconnect_button">Disconnect</string>
+    <string name="loyverse_disconnect_dialog_title">Disconnect Loyverse?</string>
+    <string name="loyverse_disconnect_dialog_text">Upcoming Velox sales will no longer be sent to your Loyverse POS.</string>
+    <string name="loyverse_disconnect_confirm">Disconnect</string>
+</resources>

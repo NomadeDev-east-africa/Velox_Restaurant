@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,21 +40,28 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dj.nomade.velox_restaurant.R
 import dj.nomade.velox_restaurant.data.model.Order
+import dj.nomade.velox_restaurant.data.model.OrderItem
 import dj.nomade.velox_restaurant.data.model.OrderStatus
+import dj.nomade.velox_restaurant.data.model.OptionTagKind
 import dj.nomade.velox_restaurant.ui.components.StatusChip
 import dj.nomade.velox_restaurant.ui.components.TimeAgoText
 import dj.nomade.velox_restaurant.ui.theme.InterFontFamily
@@ -62,6 +71,10 @@ import dj.nomade.velox_restaurant.ui.theme.OnNeonGreen
 import dj.nomade.velox_restaurant.ui.theme.SurfaceL1
 import dj.nomade.velox_restaurant.ui.theme.SurfaceL2
 import dj.nomade.velox_restaurant.ui.theme.SurfaceL3
+import dj.nomade.velox_restaurant.ui.theme.TagChoice
+import dj.nomade.velox_restaurant.ui.theme.TagExtra
+import dj.nomade.velox_restaurant.ui.theme.TagSauce
+import kotlinx.coroutines.delay
 
 @Composable
 fun OrdersScreen(viewModel: OrdersViewModel = hiltViewModel()) {
@@ -79,14 +92,14 @@ fun OrdersScreen(viewModel: OrdersViewModel = hiltViewModel()) {
             // ── En-tête ────────────────────────────────────────────────
             Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
                 Text(
-                    "OPERATION MANAGEMENT",
+                    stringResource(R.string.orders_header_kicker),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 10.sp,
                     fontFamily = InterFontFamily,
                     letterSpacing = 2.sp,
                 )
                 Text(
-                    "GESTION DES\nCOMMANDES",
+                    stringResource(R.string.orders_header_title),
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
@@ -102,7 +115,7 @@ fun OrdersScreen(viewModel: OrdersViewModel = hiltViewModel()) {
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        "SYSTEM ACTIVE",
+                        stringResource(R.string.orders_system_active),
                         color = NeonGreen,
                         fontSize = 10.sp,
                         fontFamily = InterFontFamily,
@@ -129,13 +142,13 @@ fun OrdersScreen(viewModel: OrdersViewModel = hiltViewModel()) {
                 modifier = Modifier.padding(horizontal = 20.dp),
             ) {
                 OnyxTab(
-                    text = "NOUVELLES",
+                    text = stringResource(R.string.orders_tab_new),
                     count = uiState.pendingOrders.size,
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
                 )
                 OnyxTab(
-                    text = "EN COURS",
+                    text = stringResource(R.string.orders_tab_active),
                     count = uiState.activeOrders.size,
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
@@ -154,9 +167,11 @@ fun OrdersScreen(viewModel: OrdersViewModel = hiltViewModel()) {
             } else {
                 ActiveOrdersList(
                     orders = uiState.activeOrders,
+                    resendingOrderId = uiState.resendingOrderId,
                     onStartPrep = { viewModel.startPreparation(it) },
                     onMarkReady = { viewModel.markReady(it) },
                     onCancel = { id, reason -> viewModel.cancelOrder(id, reason) },
+                    onResend = { viewModel.resendToDrivers(it) },
                 )
             }
         }
@@ -216,7 +231,7 @@ private fun PendingOrdersList(
     onCancel: (String, String) -> Unit,
 ) {
     if (orders.isEmpty()) {
-        EmptyState("Aucune nouvelle commande")
+        EmptyState(stringResource(R.string.orders_empty_new))
         return
     }
     LazyColumn(
@@ -256,14 +271,14 @@ private fun PendingOrderCard(
         ) {
             Column {
                 Text(
-                    "INCOMING SIGNAL",
+                    stringResource(R.string.orders_incoming_signal),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 9.sp,
                     fontFamily = InterFontFamily,
                     letterSpacing = 1.5.sp,
                 )
                 Text(
-                    "ORD-${order.id.takeLast(4).uppercase()}",
+                    stringResource(R.string.orders_id_format, order.id.takeLast(4).uppercase()),
                     fontFamily = ManropeFontFamily,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 24.sp,
@@ -276,64 +291,47 @@ private fun PendingOrderCard(
         Spacer(Modifier.height(16.dp))
 
         // ── Client ──
-        InfoRow(Icons.Default.Person, "CUSTOMER", order.customerName)
+        InfoRow(Icons.Default.Person, stringResource(R.string.orders_customer), order.customerName)
         Spacer(Modifier.height(8.dp))
-        InfoRow(Icons.Default.Phone, "CONTACT", order.customerPhone)
+        InfoRow(Icons.Default.Phone, stringResource(R.string.orders_contact), order.customerPhone)
 
         Spacer(Modifier.height(16.dp))
 
         // ── Payload / Value ──
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Column {
-                Text("PAYLOAD", color = MaterialTheme.colorScheme.onSurfaceVariant,
+                Text(stringResource(R.string.orders_payload), color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 9.sp, fontFamily = InterFontFamily, letterSpacing = 1.sp)
-                Text("${order.itemCount} Item${if (order.itemCount > 1) "s" else ""}",
+                Text(
+                    pluralStringResource(R.plurals.orders_item_count, order.itemCount, order.itemCount),
                     color = MaterialTheme.colorScheme.onSurface,
                     fontFamily = InterFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text("VALUE", color = MaterialTheme.colorScheme.onSurfaceVariant,
+                Text(stringResource(R.string.orders_value), color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 9.sp, fontFamily = InterFontFamily, letterSpacing = 1.sp)
                 Text(
-                    "${order.total.toInt()} FDJ",
+                    stringResource(R.string.price_fdj, order.subtotal.toInt()),
                     color = NeonGreen,
                     fontFamily = ManropeFontFamily,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 18.sp,
                 )
+                if (order.deliveryFee > 0) {
+                    Text(
+                        stringResource(R.string.orders_delivery_fee_line, order.deliveryFee.toInt()),
+                        color = Color(0xFFFFC107),
+                        fontFamily = InterFontFamily,
+                        fontSize = 11.sp,
+                    )
+                }
             }
         }
 
         Spacer(Modifier.height(12.dp))
 
         // ── Détail articles ──
-        order.items.forEach { item ->
-            Text(
-                "${item.quantity}×  ${item.name}",
-                color = MaterialTheme.colorScheme.onSurface,
-                fontFamily = InterFontFamily,
-                fontWeight = FontWeight.Medium,
-                fontSize = 13.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (item.sauces.isNotEmpty()) {
-                Text(
-                    "  › Sauces: ${item.sauces.joinToString(", ")}",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontFamily = InterFontFamily,
-                    fontSize = 11.sp,
-                )
-            }
-            if (item.extras.isNotEmpty()) {
-                Text(
-                    "  › Extras: ${item.extras.joinToString(", ")}",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontFamily = InterFontFamily,
-                    fontSize = 11.sp,
-                )
-            }
-        }
+        OrderItemsDetail(order.items)
 
         Spacer(Modifier.height(20.dp))
 
@@ -344,7 +342,7 @@ private fun PendingOrderCard(
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NeonGreen, contentColor = OnNeonGreen),
         ) {
-            Text("ACCEPTER  ›", fontFamily = ManropeFontFamily, fontWeight = FontWeight.ExtraBold,
+            Text(stringResource(R.string.orders_accept_button), fontFamily = ManropeFontFamily, fontWeight = FontWeight.ExtraBold,
                 fontSize = 13.sp, letterSpacing = 2.sp)
         }
 
@@ -357,7 +355,7 @@ private fun PendingOrderCard(
             Icon(Icons.Default.Cancel, contentDescription = null,
                 tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(14.dp))
             Spacer(Modifier.width(4.dp))
-            Text("Refuser", color = MaterialTheme.colorScheme.error,
+            Text(stringResource(R.string.orders_reject_button), color = MaterialTheme.colorScheme.error,
                 fontFamily = InterFontFamily, fontSize = 12.sp)
         }
     }
@@ -375,12 +373,14 @@ private fun PendingOrderCard(
 @Composable
 private fun ActiveOrdersList(
     orders: List<Order>,
+    resendingOrderId: String?,
     onStartPrep: (String) -> Unit,
     onMarkReady: (String) -> Unit,
     onCancel: (String, String) -> Unit,
+    onResend: (String) -> Unit,
 ) {
     if (orders.isEmpty()) {
-        EmptyState("Aucune commande en cours")
+        EmptyState(stringResource(R.string.orders_empty_active))
         return
     }
     LazyColumn(
@@ -390,21 +390,42 @@ private fun ActiveOrdersList(
         items(orders, key = { it.id }) { order ->
             ActiveOrderCard(
                 order = order,
+                isResending = resendingOrderId == order.id,
                 onStartPrep = { onStartPrep(order.id) },
                 onMarkReady = { onMarkReady(order.id) },
                 onCancel = onCancel,
+                onResend = { onResend(order.id) },
             )
         }
         item { Spacer(Modifier.height(16.dp)) }
     }
 }
 
+/** Secondes restantes avant de pouvoir relancer (cooldown 60s côté Cloud Function). */
+@Composable
+private fun rememberResendCooldownSeconds(lastResendAt: Long?): State<Int> =
+    produceState(initialValue = 0, lastResendAt) {
+        if (lastResendAt == null) {
+            value = 0
+            return@produceState
+        }
+        while (true) {
+            val elapsedSeconds = (System.currentTimeMillis() - lastResendAt) / 1000
+            val remaining = (60 - elapsedSeconds).toInt().coerceAtLeast(0)
+            value = remaining
+            if (remaining <= 0) break
+            delay(1_000)
+        }
+    }
+
 @Composable
 private fun ActiveOrderCard(
     order: Order,
+    isResending: Boolean,
     onStartPrep: () -> Unit,
     onMarkReady: () -> Unit,
     onCancel: (String, String) -> Unit,
+    onResend: () -> Unit,
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
 
@@ -434,7 +455,7 @@ private fun ActiveOrderCard(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "#ORD-${order.id.takeLast(4).uppercase()}",
+                    stringResource(R.string.orders_id_hash_format, order.id.takeLast(4).uppercase()),
                     fontFamily = ManropeFontFamily,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 20.sp,
@@ -443,44 +464,40 @@ private fun ActiveOrderCard(
                 StatusChip(order.status)
             }
 
-            Text(
-                "Client: ${order.customerName}",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontFamily = InterFontFamily,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(top = 4.dp),
-            )
+            Row(
+                Modifier.fillMaxWidth().padding(top = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    stringResource(R.string.orders_customer_label, order.customerName),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = InterFontFamily,
+                    fontSize = 12.sp,
+                )
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        stringResource(R.string.price_fdj, order.subtotal.toInt()),
+                        color = NeonGreen,
+                        fontFamily = ManropeFontFamily,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 16.sp,
+                    )
+                    if (order.deliveryFee > 0) {
+                        Text(
+                            stringResource(R.string.orders_delivery_fee_line, order.deliveryFee.toInt()),
+                            color = Color(0xFFFFC107),
+                            fontFamily = InterFontFamily,
+                            fontSize = 10.sp,
+                        )
+                    }
+                }
+            }
 
             Spacer(Modifier.height(12.dp))
 
             // Items
-            order.items.forEach { item ->
-                Text(
-                    "${item.quantity}×  ${item.name}",
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontFamily = InterFontFamily,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 13.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (item.sauces.isNotEmpty()) {
-                    Text(
-                        "  › Sauces: ${item.sauces.joinToString(", ")}",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontFamily = InterFontFamily,
-                        fontSize = 11.sp,
-                    )
-                }
-                if (item.extras.isNotEmpty()) {
-                    Text(
-                        "  › Extras: ${item.extras.joinToString(", ")}",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontFamily = InterFontFamily,
-                        fontSize = 11.sp,
-                    )
-                }
-            }
+            OrderItemsDetail(order.items)
 
             Spacer(Modifier.height(16.dp))
 
@@ -493,7 +510,7 @@ private fun ActiveOrderCard(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SurfaceL3, contentColor = MaterialTheme.colorScheme.onSurface),
                 ) {
-                    Text("COMMENCER PRÉPARATION", fontFamily = ManropeFontFamily,
+                    Text(stringResource(R.string.orders_start_prep_button), fontFamily = ManropeFontFamily,
                         fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.sp)
                 }
 
@@ -504,27 +521,66 @@ private fun ActiveOrderCard(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = NeonGreen, contentColor = OnNeonGreen),
                 ) {
-                    Text("PRÊT POUR RETRAIT  ›", fontFamily = ManropeFontFamily,
+                    Text(stringResource(R.string.orders_mark_ready_button), fontFamily = ManropeFontFamily,
                         fontWeight = FontWeight.ExtraBold, fontSize = 12.sp, letterSpacing = 1.5.sp)
                 }
 
-                OrderStatus.READY -> Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(NeonGreen.copy(alpha = 0.1f), RoundedCornerShape(10.dp))
-                        .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("✓ EN ATTENTE DU LIVREUR", color = NeonGreen,
-                        fontFamily = ManropeFontFamily, fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp, letterSpacing = 1.sp)
+                OrderStatus.READY -> if (order.deliveryDriverId.isNullOrBlank()) {
+                    val cooldown by rememberResendCooldownSeconds(order.lastResendAt)
+                    Button(
+                        onClick = onResend,
+                        enabled = !isResending && cooldown == 0,
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = NeonGreen, contentColor = OnNeonGreen,
+                            disabledContainerColor = NeonGreen.copy(alpha = 0.3f),
+                            disabledContentColor = OnNeonGreen.copy(alpha = 0.7f),
+                        ),
+                    ) {
+                        Text(
+                            when {
+                                isResending -> stringResource(R.string.orders_resend_sending)
+                                cooldown > 0 -> stringResource(R.string.orders_resend_cooldown, cooldown)
+                                else -> stringResource(R.string.orders_resend_button)
+                            },
+                            fontFamily = ManropeFontFamily, fontWeight = FontWeight.ExtraBold,
+                            fontSize = 11.sp, letterSpacing = 1.sp,
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (order.resendCount > 0) {
+                            Text(
+                                stringResource(R.string.orders_resend_count, order.resendCount),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontFamily = InterFontFamily, fontSize = 10.sp,
+                            )
+                        }
+                        TimeAgoText(order.readyAt)
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(NeonGreen.copy(alpha = 0.1f), RoundedCornerShape(10.dp))
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(stringResource(R.string.orders_driver_en_route), color = NeonGreen,
+                            fontFamily = ManropeFontFamily, fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp, letterSpacing = 1.sp)
+                    }
                 }
 
                 else -> Unit
             }
 
             TextButton(onClick = { showCancelDialog = true }) {
-                Text("Annuler", color = MaterialTheme.colorScheme.error,
+                Text(stringResource(R.string.action_cancel), color = MaterialTheme.colorScheme.error,
                     fontFamily = InterFontFamily, fontSize = 11.sp)
             }
         }
@@ -534,6 +590,83 @@ private fun ActiveOrderCard(
         CancelOrderDialog(
             onDismiss = { showCancelDialog = false },
             onConfirm = { reason -> onCancel(order.id, reason); showCancelDialog = false },
+        )
+    }
+}
+
+// ── Détail articles (nom, sauces, suppléments) ────────────────────────────────
+
+/**
+ * Affichage commun aux deux onglets (réception → préparation → envoi livraison) :
+ * même taille de police et mêmes couleurs partout pour que rien ne se "perde"
+ * quand une commande change d'écran.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun OrderItemsDetail(items: List<OrderItem>) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        items.forEach { item ->
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        stringResource(R.string.orders_item_quantity, item.quantity),
+                        color = NeonGreen,
+                        fontFamily = ManropeFontFamily,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 16.sp,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        item.name,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontFamily = ManropeFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                // Une étiquette par groupe du menu (« VIANDE : Tenders », « BOISSON : Fanta »…) ;
+                // les commandes sans nom de groupe gardent SAUCE / SUPPLÉMENT.
+                val tags = item.optionTags()
+                if (tags.isNotEmpty()) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(start = 4.dp),
+                    ) {
+                        tags.forEach { tag ->
+                            val label = tag.label?.uppercase() ?: stringResource(
+                                if (tag.kind == OptionTagKind.SAUCE) R.string.orders_tag_sauce
+                                else R.string.orders_tag_extra
+                            )
+                            val color = when (tag.kind) {
+                                OptionTagKind.SAUCE -> TagSauce
+                                OptionTagKind.EXTRA -> TagExtra
+                                OptionTagKind.CHOICE -> TagChoice
+                            }
+                            OptionTag(label, tag.values.joinToString(", "), color)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OptionTag(label: String, value: String, color: Color) {
+    Box(
+        modifier = Modifier
+            .background(color.copy(alpha = 0.18f), RoundedCornerShape(6.dp))
+            .padding(horizontal = 8.dp, vertical = 5.dp),
+    ) {
+        Text(
+            "$label : $value",
+            color = color,
+            fontFamily = InterFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp,
         )
     }
 }
@@ -569,13 +702,13 @@ private fun CancelOrderDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = SurfaceL2,
-        title = { Text("Motif d'annulation", color = MaterialTheme.colorScheme.onSurface,
+        title = { Text(stringResource(R.string.orders_cancel_dialog_title), color = MaterialTheme.colorScheme.onSurface,
             fontFamily = ManropeFontFamily, fontWeight = FontWeight.Bold) },
         text = {
             OutlinedTextField(
                 value = reason,
                 onValueChange = { reason = it },
-                placeholder = { Text("Ex: Rupture de stock…", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                placeholder = { Text(stringResource(R.string.orders_cancel_dialog_placeholder), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = NeonGreen,
                     unfocusedBorderColor = SurfaceL3,
@@ -589,11 +722,11 @@ private fun CancelOrderDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit
             Button(
                 onClick = { if (reason.isNotBlank()) onConfirm(reason) },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-            ) { Text("Annuler la commande") }
+            ) { Text(stringResource(R.string.orders_cancel_dialog_confirm)) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Retour", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.orders_cancel_dialog_back), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
     )
