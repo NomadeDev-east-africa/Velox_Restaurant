@@ -564,3 +564,140 @@ uniquement, cf. 9.1).
 
 → `app/build/outputs/bundle/release/app-release.aab` (9,9 Mo, signé,
 versionCode 3 / versionName 1.0.2).
+
+---
+
+## 10. Session des 4-5 octobre 2026 — intégration caisse Loyverse (connexion + envoi des ventes)
+
+Objectif : les restaurants qui utilisent la caisse **Loyverse** y retrouvent
+leurs ventes Velox, sans ressaisie. Le travail touche 4 projets : cette app,
+les Cloud Functions (`nomade_client/functions`), l'app client Kotlin
+(`Velox_client`) et l'admin Flutter (`ReelADMIN/ADMIN3/NOMADE_ADMIN_COMPLETE`).
+L'app iOS est sur un autre PC, hors de cette session.
+
+**Limite de l'API Loyverse (à ne jamais promettre) :** elle ne crée que des
+tickets **déjà clôturés**. Rien n'arrive « à préparer » sur la caisse ni en
+cuisine, et rien ne s'imprime automatiquement : la vente apparaît dans
+l'historique des reçus.
+
+### 10.1 Connexion d'un restaurant à son compte Loyverse (OAuth)
+
+- **Serveur** — `functions/loyverse.js` : `loyverseStartOAuth`,
+  `loyverseOAuthCallback`, `loyverseStatus`, `loyverseDisconnect`.
+  Jetons stockés dans `loyverseIntegrations/{restaurantId}` (aucune règle
+  Firestore → illisible par les apps, Admin SDK uniquement). `state` OAuth à
+  usage unique, valable 10 min ; jeton renouvelé automatiquement, statut
+  `reconnect_required` si le renouvellement est refusé.
+- **Permissions demandées** : `RECEIPTS_READ/WRITE`, `ITEMS_READ`,
+  `ITEMS_WRITE` (création de l'article générique), `STORES_READ`,
+  `PAYMENT_TYPES_READ`, `INVENTORY_READ`, `MERCHANT_READ`.
+- **Secret** `LOYVERSE_CLIENT_SECRET` dans Secret Manager (version 1).
+  ⚠️ Il a été collé dans la conversation : à régénérer dans le portail
+  Loyverse puis `firebase functions:secrets:set LOYVERSE_CLIENT_SECRET` et
+  redéploiement des fonctions `loyverse*`.
+- **App restaurant** : section « CAISSE LOYVERSE » dans le Profil (statut,
+  connexion via le navigateur, déconnexion avec confirmation, textes
+  FR/EN/AR). Fichiers : `LoyverseRepository(Impl)`, `LoyverseConnection`,
+  `ProfileViewModel`, `ProfileScreen`.
+- **« Cannot approve uninitialized request »** sur la page Loyverse = second
+  clic sur « Allow » : la connexion avait réussi au premier.
+
+### 10.2 Affichage des options par groupe dans les commandes
+
+`OrderItem.optionTags()` + `FirestoreMapper` : les options s'affichent par
+groupe du menu (« VIANDE : Tenders », « BOISSON : Fanta… ») quand l'app
+client écrit `group`. Sans `group` (anciennes commandes), l'ancien affichage
+SAUCE / SUPPLÉMENT est conservé. Couvert par `OrderItemTest`.
+
+### 10.3 Envoi des ventes et remboursements
+
+- **Quand** : la vente est créée quand le restaurant **accepte** la commande
+  (choix utilisateur). Si la commande est annulée ensuite, un ticket de
+  **remboursement** lié est créé. Commande annulée avant acceptation : rien.
+  Constat sur 86 commandes annulées : 23 l'avaient été après acceptation.
+- **Fonctions** : `loyverseOnOrderStatus` (déclencheur, `europe-west1`) et
+  `loyverseRetrySync` (toutes les 15 min, `us-central1`). Logique du ticket
+  isolée dans `functions/loyverseReceipt.js`, 11 tests :
+  `node --test test/loyverseReceipt.test.js` (passer le fichier, pas le
+  dossier, sous Node 24).
+- **Montant** = `subtotal`. Livraison exclue ; codes promo et points payés
+  par Velox (décision utilisateur) → le ticket reste au prix plein.
+- **Plats** : plat relié dans `loyverseMappings/{restaurantId}.items` →
+  son article Loyverse ; sinon article générique **« Vente Velox »** à prix
+  libre, créé automatiquement une fois par restaurant, nom du plat en note.
+  Options écrites en note de ligne (pas de `line_modifiers` : format d'envoi
+  non documenté et leur prix s'ajouterait au prix de la ligne).
+- **Paiement** : correspondance `loyverseMappings.paymentTypes`, sinon type
+  Loyverse du même nom (« Waafi »), sinon `CASH` pour `cash` et `OTHER`
+  pour le reste. **Magasin** : choisi automatiquement s'il n'y en a qu'un.
+- **Fiabilité** : suivi dans `loyverseSales/{orderId}` (jamais dans
+  `orders`, pour ne pas relancer les autres déclencheurs), réservation par
+  transaction, recherche du ticket existant (`GET /receipts?order=`) avant
+  chaque nouvel essai → aucun doublon. Erreurs temporaires rejouées après 1,
+  5, 15, 60, 180, 360, 720 min, puis statut `error`. Devise ≠ DJF refusée.
+- **Contraintes API constatées en réel** : `order` ≤ **20 caractères**
+  (on envoie l'id Firestore seul) ; `POST /receipts` vérifie `payments` avant
+  les autres champs.
+
+### 10.4 Apps client et admin (prompts rédigés, appliqués par d'autres agents)
+
+- **Contrat** : chaque choix d'option porte un `id` stable `ch_xxxxxxxx`
+  généré par l'admin ; l'app client recopie `choiceId` + `group` dans
+  `orders.items[].extras[]/sauces[]`. Prompts :
+  `Velox_client/PROMPT_LOYVERSE_{ANDROID,IOS}.md`,
+  `NOMADE_ADMIN_COMPLETE/PROMPT_LOYVERSE_ADMIN.md`.
+- **Velox_client (Kotlin)** : écrit déjà `choiceId` et `group`.
+- **Admin** : fait sur `feat/option-choice-ids` (38 tests OK) — `id` et
+  `available` conservés à la sauvegarde (corrige l'effacement des ruptures
+  posées par le restaurant), bouton de migration avec comptage + confirmation.
+  ⏳ À commiter, fusionner, déployer, puis lancer la migration une fois.
+
+### 10.5 Tests réels (compte Loyverse de test, restaurant ALI PASTA)
+
+- ✅ Connexion OAuth : `loyverseIntegrations/vlvQZc6i4AUdXjYpyULGqsxvDXB3`.
+- ❌ 1re vente refusée (`order` de 26 caractères) → corrigé (`77b9b06`).
+- ✅ 2e vente : **reçu 0001**, 1 000 FDJ (= `subtotal`, livraison exclue),
+  paiement Cash, article « Vente Velox », note avec le plat et ses options.
+- ✅ Annulation d'une vente jamais créée → suivi clos en `skipped`.
+- ⏳ **Remboursement d'une vente réelle : non testé.** Le bouton
+  « Annuler » de l'onglet EN COURS n'apparaissait pas sur le téléphone de
+  test, alors que le code l'affiche toujours (`OrdersScreen.kt:582`) :
+  à revérifier avec la version 1.0.9.
+- ⏳ **Restaurant réel** : Loyverse exige l'abonnement **« Integrations »**
+  (9 $/mois/magasin, essai gratuit 14 jours) pour connecter une app externe.
+  Décision à prendre : qui paie (restaurant ou Velox).
+
+### 10.6 Commits et déploiements
+
+- `Velox_Restaurant` (branche `fix/menu-categories-stats-comptables`) :
+  `bdf8a74` (Loyverse Profil + options par groupe), version **10 / 1.0.9**.
+- `nomade_client` (branche `feature/design-review`) : `984d080` (OAuth),
+  `68b25ec` (`ITEMS_WRITE`), `74b6404` (envoi des ventes), `77b9b06`
+  (référence ≤ 20 caractères). Les 6 fonctions `loyverse*` sont déployées.
+  ⚠️ `functions/index.js` contient d'autres changements non commités, sans
+  rapport avec Loyverse (heartbeat chauffeurs, statuts de course,
+  `onOrderCreated`) : à vérifier par leur auteur.
+- Déployer les fonctions avec `FUNCTIONS_DISCOVERY_TIMEOUT=90`, sinon le
+  chargement d'`index.js` dépasse le délai de 10 s.
+
+### 10.7 Reste à faire
+
+1. Tester le remboursement (annuler une commande acceptée chez ALI PASTA).
+2. Décider qui paie l'abonnement Loyverse « Integrations », puis pilote chez
+   un vrai restaurant.
+3. Admin : écran de correspondance plats ↔ articles Loyverse et choix du
+   magasin / des types de paiement (écrit `loyverseMappings`, demande des
+   règles Firestore pour cette collection).
+4. Régénérer le secret Loyverse (cf. 10.1).
+5. Fusionner `fix/menu-categories-stats-comptables` dans `main`.
+
+### 10.8 Build
+
+```bash
+./gradlew.bat bundleRelease
+```
+
+→ `app/build/outputs/bundle/release/app-release.aab` (8,8 Mo, signé,
+versionCode 10 / versionName 1.0.9), copié sur le Bureau sous
+`Velox_Restaurant_1.0.9_v10.aab`. APK de test du même build :
+`Velox_Restaurant_1.0.9_loyverse.apk`.
