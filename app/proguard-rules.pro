@@ -18,8 +18,8 @@
 -keep class androidx.compose.ui.text.googlefonts.** { *; }
 
 # ─── Firebase ─────────────────────────────────────────────────────────────────
--keep class com.google.firebase.** { *; }
--keep class com.google.android.gms.** { *; }
+# Pas de -keep global : Firebase et Play Services fournissent leurs propres règles,
+# et un -keep sur tout le package empêchait R8 de les optimiser (alerte Play Console).
 -dontwarn com.google.firebase.**
 -dontwarn com.google.android.gms.**
 
@@ -31,7 +31,6 @@
 }
 
 # ─── Hilt / Dagger ────────────────────────────────────────────────────────────
--keep class dagger.hilt.** { *; }
 -keep @dagger.hilt.android.lifecycle.HiltViewModel class * { *; }
 -keep @dagger.Module class * { *; }
 -keepclasseswithmembers class * {
